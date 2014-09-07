@@ -462,6 +462,10 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
     /**
      * Sets a new adjustment period for this service.
+     * <p/>
+     * All tasks are re-scheduled every adjustment period, in case the internal timer falls out-of-sync with the clock.
+     * <p/>
+     * The default adjustment period is 2 hours.
      *
      * @param adjustmentPeriod
      *         The new adjustment period. Must not be {@code null} or negative.

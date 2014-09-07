@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
+import au.id.ajlane.time.TestClock;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -12,7 +13,7 @@ public final class CalendarExecutorServiceTest
     @Test
     public void simpleScheduling() throws Exception
     {
-        final Duration interval = Duration.ofSeconds(5L);
+        final Duration interval = Duration.ofMinutes(1L);
 
         final Instant t0 = Instant.now();
         final Instant tN1 = t0.minus(interval);
@@ -22,9 +23,10 @@ public final class CalendarExecutorServiceTest
 
         final TestClock clock = new TestClock(interval, t0);
         @SuppressWarnings("CastToConcreteClass")
-        final DelayBasedCalendarExecutorService executor = (DelayBasedCalendarExecutorService) CalendarExecutorService
-                .threadPool(clock);
-        executor.setAdjustmentPeriod(Duration.ofSeconds(1L));
+        final DelayBasedCalendarExecutorService executor = (DelayBasedCalendarExecutorService) CalendarExecutorService.threadPool(
+                clock
+        );
+        executor.setAdjustmentPeriod(Duration.ofMillis(500L));
 
         final CalendarFuture<Instant> tN1Future = executor.schedule(() -> tN1, tN1);
         final CalendarFuture<Instant> t0Future = executor.schedule(() -> t0, t0);

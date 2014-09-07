@@ -11,6 +11,56 @@ import org.junit.Test;
 public final class SchedulingAdjustersTest
 {
     @Test
+    public void testNearestWeekday()
+    {
+        final OffsetDateTime fri = OffsetDateTime.of(1999, 12, 31, 16, 0, 0, 0, ZoneOffset.ofHours(0));
+        final OffsetDateTime sat = OffsetDateTime.of(2000, 1, 1, 17, 0, 0, 0, ZoneOffset.ofHours(1));
+        final OffsetDateTime sun = OffsetDateTime.of(2000, 1, 2, 18, 0, 0, 0, ZoneOffset.ofHours(2));
+        final OffsetDateTime mon = OffsetDateTime.of(2000, 1, 3, 19, 0, 0, 0, ZoneOffset.ofHours(3));
+        final OffsetDateTime wed = OffsetDateTime.of(2000, 1, 5, 20, 0, 0, 0, ZoneOffset.ofHours(4));
+
+        final TemporalAdjuster adjuster = SchedulingAdjusters.nearestWeekday();
+
+        Assert.assertEquals(fri.toInstant(), fri.with(adjuster).toInstant());
+        Assert.assertEquals(fri.toInstant(), sat.with(adjuster).toInstant());
+        Assert.assertEquals(mon.toInstant(), sun.with(adjuster).toInstant());
+        Assert.assertEquals(mon.toInstant(), mon.with(adjuster).toInstant());
+        Assert.assertEquals(wed.toInstant(), wed.with(adjuster).toInstant());
+    }
+
+    @Test
+    public void testNextDay()
+    {
+        final OffsetDateTime dec31 = OffsetDateTime.of(2000, 12, 31, 16, 0, 0, 0, ZoneOffset.ofHours(0));
+        final OffsetDateTime jan1 = OffsetDateTime.of(2001, 1, 1, 17, 0, 0, 0, ZoneOffset.ofHours(1));
+
+        final TemporalAdjuster adjuster = SchedulingAdjusters.nextDay();
+
+        Assert.assertEquals(jan1.toInstant(), dec31.with(adjuster).toInstant());
+    }
+
+    @Test
+    public void testNextDayOfMonth()
+    {
+        final OffsetDateTime jan1 = OffsetDateTime.of(2000, 1, 1, 3, 0, 0, 0, ZoneOffset.ofHours(0));
+        final OffsetDateTime jan31 = OffsetDateTime.of(2000, 1, 31, 4, 0, 0, 0, ZoneOffset.ofHours(1));
+        final OffsetDateTime feb3 = OffsetDateTime.of(2000, 2, 3, 5, 0, 0, 0, ZoneOffset.ofHours(2));
+        final OffsetDateTime feb15 = OffsetDateTime.of(2000, 2, 15, 6, 0, 0, 0, ZoneOffset.ofHours(3));
+        final OffsetDateTime feb29 = OffsetDateTime.of(2000, 2, 29, 7, 0, 0, 0, ZoneOffset.ofHours(4));
+
+        final TemporalAdjuster to15th = SchedulingAdjusters.nextDayOfMonth(15);
+
+        Assert.assertEquals(feb15.toInstant(), jan31.with(to15th).toInstant());
+        Assert.assertEquals(feb15.toInstant(), feb3.with(to15th).toInstant());
+
+        final TemporalAdjuster to31st = SchedulingAdjusters.nextDayOfMonth(31);
+
+        Assert.assertEquals(jan31.toInstant(), jan1.with(to31st).toInstant());
+        Assert.assertEquals(feb29.toInstant(), jan31.with(to31st).toInstant());
+        Assert.assertEquals(feb29.toInstant(), feb15.with(to31st).toInstant());
+    }
+
+    @Test
     public void testNextMonth()
     {
         final OffsetDateTime jan = OffsetDateTime.of(2000, 1, 31, 3, 0, 0, 0, ZoneOffset.ofHours(0));

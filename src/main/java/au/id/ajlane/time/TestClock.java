@@ -1,4 +1,4 @@
-package au.id.ajlane.concurrent;
+package au.id.ajlane.time;
 
 import java.time.Clock;
 import java.time.Instant;

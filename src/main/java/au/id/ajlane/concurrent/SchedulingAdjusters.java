@@ -51,6 +51,14 @@ public abstract class SchedulingAdjusters
         return t0 -> adjusters.reduce(t0, (t1, a) -> a.adjustInto(t1), (t1, t2) -> t2);
     }
 
+    /**
+     * Shifts the time forwards or backwards to the nearest weekday.
+     * <p/>
+     * Saturdays are adjusted to the previous day, and Sundays are adjusted to the following day. Weekdays are not
+     * adjusted.
+     *
+     * @return A {@code TemporalAdjuster}.
+     */
     public static TemporalAdjuster nearestWeekday()
     {
         return t -> {
@@ -76,11 +84,22 @@ public abstract class SchedulingAdjusters
         return t -> t.plus(1L, ChronoUnit.DAYS);
     }
 
+    /**
+     * Advances to the same time on the next instance of a numbered day of month.
+     * <p/>
+     * If the day has already past for the current month, the next month will be used.
+     * <p/>
+     * If the month is too short for the given day to exist, the last day of the month will be used.
+     *
+     * @param dayOfMonth
+     *         The day-of-month to advance to. Must be between 1 and 31 (inclusive).
+     * @return A {@link java.time.temporal.TemporalAdjuster}.
+     */
     public static TemporalAdjuster nextDayOfMonth(final int dayOfMonth)
     {
         return t -> {
             YearMonth yearMonth = YearMonth.from(t);
-            if (t.get(ChronoField.DAY_OF_MONTH) <= dayOfMonth)
+            if (t.get(ChronoField.DAY_OF_MONTH) >= dayOfMonth)
             {
                 yearMonth = yearMonth.plusMonths(1);
             }
@@ -153,7 +172,7 @@ public abstract class SchedulingAdjusters
      *         The time to advance to. May not be {@code null}.
      * @return A {@link java.time.temporal.TemporalAdjuster}.
      */
-    public static TemporalAdjuster nextTime(final OffsetTime time)
+    public static TemporalAdjuster nextTime(@SuppressWarnings("TypeMayBeWeakened") final OffsetTime time)
     {
         return previous -> {
             Temporal next = previous;
