@@ -3,15 +3,21 @@ package au.id.ajlane.concurrent;
 import java.time.DayOfWeek;
 import java.time.OffsetTime;
 import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.time.temporal.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
  * Utilities for producing instances of {@link java.time.temporal.TemporalAdjuster} that are useful for scheduling
  * regular tasks.
+ * <p/>
+ * A key feature of the adjusters provided by these utilities is that they never adjust a given {@link Temporal} to be
+ * earlier than it was before. This allows them to be arbitrarily combined using the {@link #chain} methods without
+ * creating any infinite loops.
  */
 public abstract class SchedulingAdjusters
 {
@@ -36,7 +42,7 @@ public abstract class SchedulingAdjusters
      */
     public static TemporalAdjuster chain(final Collection<TemporalAdjuster> adjusters)
     {
-        return chain(adjusters.stream());
+        return chain(adjusters::stream);
     }
 
     /**
@@ -46,30 +52,12 @@ public abstract class SchedulingAdjusters
      *         The series of adjusters to combine.
      * @return A {@code TemporalAdjuster}.
      */
-    public static TemporalAdjuster chain(final Stream<TemporalAdjuster> adjusters)
+    public static TemporalAdjuster chain(final Supplier<Stream<TemporalAdjuster>> adjusters)
     {
-        return t0 -> adjusters.reduce(t0, (t1, a) -> a.adjustInto(t1), (t1, t2) -> t2);
-    }
-
-    /**
-     * Shifts the time forwards or backwards to the nearest weekday.
-     * <p/>
-     * Saturdays are adjusted to the previous day, and Sundays are adjusted to the following day. Weekdays are not
-     * adjusted.
-     *
-     * @return A {@code TemporalAdjuster}.
-     */
-    public static TemporalAdjuster nearestWeekday()
-    {
-        return t -> {
-            switch (DayOfWeek.from(t))
+        return t0 -> {
+            try (final Stream<TemporalAdjuster> stream = adjusters.get())
             {
-                case SATURDAY:
-                    return t.minus(1, ChronoUnit.DAYS);
-                case SUNDAY:
-                    return t.plus(1, ChronoUnit.DAYS);
-                default:
-                    return t;
+                return stream.reduce(t0, (t1, a) -> a.adjustInto(t1), (t1, t2) -> t2);
             }
         };
     }
@@ -87,7 +75,7 @@ public abstract class SchedulingAdjusters
     /**
      * Advances to the same time on the next instance of a numbered day of month.
      * <p/>
-     * If the day has already past for the current month, the next month will be used.
+     * If the day has already past for the current month or is the current day, the next month will be used.
      * <p/>
      * If the month is too short for the given day to exist, the last day of the month will be used.
      *
@@ -166,6 +154,86 @@ public abstract class SchedulingAdjusters
     }
 
     /**
+     * Advances to the same time on the next instance of a numbered day of month.
+     * <p/>
+     * If the day has already past for the current month, the next month will be used.
+     * <p/>
+     * If the month is too short for the given day to exist, the last day of the month will be used.
+     *
+     * @param dayOfMonth
+     *         The day-of-month to advance to. Must be between 1 and 31 (inclusive).
+     * @return A {@link java.time.temporal.TemporalAdjuster}.
+     */
+    public static TemporalAdjuster nextOrSameDayOfMonth(final int dayOfMonth)
+    {
+        return t -> {
+            YearMonth yearMonth = YearMonth.from(t);
+            if (t.get(ChronoField.DAY_OF_MONTH) > dayOfMonth)
+            {
+                yearMonth = yearMonth.plusMonths(1);
+            }
+
+            // We adjust to the first day of the month first, to avoid creating a transitory date which is invalid.
+            return t.with(ChronoField.DAY_OF_MONTH, 1)
+                    .with(ChronoField.MONTH_OF_YEAR, yearMonth.getMonthValue())
+                    .with(ChronoField.YEAR, yearMonth.getYear())
+                    .with(ChronoField.DAY_OF_MONTH, Math.min(dayOfMonth, yearMonth.lengthOfMonth()));
+        };
+    }
+
+    /**
+     * Advances to the same time on the next instance of a day-of-week.
+     * <p/>
+     * If the current day is the given day-of-week, no change is made.
+     *
+     * @param dayOfWeek
+     *         The day-of-week to advance to. May not be {@code null}.
+     * @return A {@link java.time.temporal.TemporalAdjuster}.
+     */
+    public static TemporalAdjuster nextOrSameDayOfWeek(final DayOfWeek dayOfWeek)
+    {
+        return TemporalAdjusters.nextOrSame(dayOfWeek);
+    }
+
+    /**
+     * Advances to a particular time.
+     *
+     * @param time
+     *         The time to advance to. May not be {@code null}.
+     * @return A {@link java.time.temporal.TemporalAdjuster}.
+     */
+    public static TemporalAdjuster nextOrSameTime(@SuppressWarnings("TypeMayBeWeakened") final OffsetTime time)
+    {
+        return previous -> {
+            Temporal next = changeOffset(previous, time.getOffset());
+            final boolean wrap = next.getLong(ChronoField.NANO_OF_DAY) > time.getLong(ChronoField.NANO_OF_DAY);
+            next = next.with(ChronoField.NANO_OF_DAY, time.getLong(ChronoField.NANO_OF_DAY));
+            if (wrap) { next = next.plus(1L, ChronoUnit.DAYS); }
+            return next;
+        };
+    }
+
+    /**
+     * Shifts the time forwards to the next weekday.
+     *
+     * @return A {@code TemporalAdjuster}.
+     */
+    public static TemporalAdjuster nextOrSameWeekday()
+    {
+        return t -> {
+            switch (DayOfWeek.from(t))
+            {
+                case SATURDAY:
+                    return t.plus(2, ChronoUnit.DAYS);
+                case SUNDAY:
+                    return t.plus(1, ChronoUnit.DAYS);
+                default:
+                    return t;
+            }
+        };
+    }
+
+    /**
      * Advances to a particular time.
      *
      * @param time
@@ -175,8 +243,8 @@ public abstract class SchedulingAdjusters
     public static TemporalAdjuster nextTime(@SuppressWarnings("TypeMayBeWeakened") final OffsetTime time)
     {
         return previous -> {
-            Temporal next = previous;
-            final boolean wrap = next.getLong(ChronoField.NANO_OF_DAY) > time.getLong(ChronoField.NANO_OF_DAY);
+            Temporal next = changeOffset(previous, time.getOffset());
+            final boolean wrap = next.getLong(ChronoField.NANO_OF_DAY) >= time.getLong(ChronoField.NANO_OF_DAY);
             next = next.with(ChronoField.NANO_OF_DAY, time.getLong(ChronoField.NANO_OF_DAY));
             if (wrap) { next = next.plus(1L, ChronoUnit.DAYS); }
             return next;
@@ -194,6 +262,26 @@ public abstract class SchedulingAdjusters
     }
 
     /**
+     * Shifts the time forwards to the next weekday.
+     *
+     * @return A {@code TemporalAdjuster}.
+     */
+    public static TemporalAdjuster nextWeekday()
+    {
+        return t -> {
+            switch (DayOfWeek.from(t))
+            {
+                case FRIDAY:
+                    return t.plus(3, ChronoUnit.DAYS);
+                case SATURDAY:
+                    return t.plus(2, ChronoUnit.DAYS);
+                default:
+                    return t.plus(1, ChronoUnit.DAYS);
+            }
+        };
+    }
+
+    /**
      * Advances to the same time next year.
      *
      * @return A {@link java.time.temporal.TemporalAdjuster}.
@@ -201,5 +289,14 @@ public abstract class SchedulingAdjusters
     public static TemporalAdjuster nextYear()
     {
         return t -> t.plus(1L, ChronoUnit.YEARS);
+    }
+
+    private static Temporal changeOffset(final Temporal t, final ZoneOffset offset)
+    {
+        return t.isSupported(ChronoField.OFFSET_SECONDS) ?
+               t.minus(t.get(ChronoField.OFFSET_SECONDS), ChronoUnit.SECONDS)
+                .plus(offset.getTotalSeconds(), ChronoUnit.SECONDS)
+                .with(offset) :
+               t;
     }
 }

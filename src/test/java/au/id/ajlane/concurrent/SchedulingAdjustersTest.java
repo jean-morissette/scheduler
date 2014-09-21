@@ -11,21 +11,20 @@ import org.junit.Test;
 public final class SchedulingAdjustersTest
 {
     @Test
-    public void testNearestWeekday()
+    public void testChain()
     {
-        final OffsetDateTime fri = OffsetDateTime.of(1999, 12, 31, 16, 0, 0, 0, ZoneOffset.ofHours(0));
-        final OffsetDateTime sat = OffsetDateTime.of(2000, 1, 1, 17, 0, 0, 0, ZoneOffset.ofHours(1));
-        final OffsetDateTime sun = OffsetDateTime.of(2000, 1, 2, 18, 0, 0, 0, ZoneOffset.ofHours(2));
-        final OffsetDateTime mon = OffsetDateTime.of(2000, 1, 3, 19, 0, 0, 0, ZoneOffset.ofHours(3));
-        final OffsetDateTime wed = OffsetDateTime.of(2000, 1, 5, 20, 0, 0, 0, ZoneOffset.ofHours(4));
+        final OffsetDateTime jan1 = OffsetDateTime.of(2000, 1, 1, 6, 0, 0, 0, ZoneOffset.ofHours(0));
+        final OffsetDateTime jan17 = OffsetDateTime.of(2000, 1, 17, 17, 0, 0, 0, ZoneOffset.ofHours(1));
+        final OffsetDateTime feb15 = OffsetDateTime.of(2000, 2, 16, 10, 0, 0, 0, ZoneOffset.ofHours(18));
 
-        final TemporalAdjuster adjuster = SchedulingAdjusters.nearestWeekday();
+        final TemporalAdjuster adjuster = SchedulingAdjusters.chain(
+                SchedulingAdjusters.nextOrSameTime(OffsetTime.of(12, 0, 0, 0, ZoneOffset.ofHours(-4))),
+                SchedulingAdjusters.nextOrSameDayOfMonth(15),
+                SchedulingAdjusters.nextOrSameWeekday()
+        );
 
-        Assert.assertEquals(fri.toInstant(), fri.with(adjuster).toInstant());
-        Assert.assertEquals(fri.toInstant(), sat.with(adjuster).toInstant());
-        Assert.assertEquals(mon.toInstant(), sun.with(adjuster).toInstant());
-        Assert.assertEquals(mon.toInstant(), mon.with(adjuster).toInstant());
-        Assert.assertEquals(wed.toInstant(), wed.with(adjuster).toInstant());
+        Assert.assertEquals(jan17.toInstant(), jan1.with(adjuster).toInstant());
+        Assert.assertEquals(feb15.toInstant(), jan17.with(adjuster).toInstant());
     }
 
     @Test
@@ -113,18 +112,43 @@ public final class SchedulingAdjustersTest
     @Test
     public void testNextTime()
     {
-        final OffsetTime time = OffsetTime.of(18, 0, 0, 0, ZoneOffset.UTC);
+        final OffsetDateTime jan1at4pm = OffsetDateTime.of(2000, 1, 1, 16, 0, 0, 0, ZoneOffset.ofHours(0));
+        final OffsetDateTime jan1at6pm = OffsetDateTime.of(2000, 1, 2, 6, 0, 0, 0, ZoneOffset.ofHours(12));
+        final OffsetDateTime jan1at8pm = OffsetDateTime.of(2000, 1, 1, 20, 0, 0, 0, ZoneOffset.ofHours(0));
+        final OffsetDateTime jan2at6pm = OffsetDateTime.of(2000, 1, 3, 12, 0, 0, 0, ZoneOffset.ofHours(18));
 
-        final OffsetDateTime t1 = OffsetDateTime.of(2000, 1, 1, 16, 0, 0, 0, ZoneOffset.UTC);
-        final OffsetDateTime t2 = OffsetDateTime.of(2000, 1, 1, 20, 0, 0, 0, ZoneOffset.UTC);
+        final TemporalAdjuster adjuster = SchedulingAdjusters.nextTime(
+                OffsetTime.of(
+                        14,
+                        0,
+                        0,
+                        0,
+                        ZoneOffset.ofHours(-4)
+                )
+        );
 
-        final TemporalAdjuster adjuster = SchedulingAdjusters.nextTime(time);
+        Assert.assertEquals(jan1at6pm.toInstant(), jan1at4pm.with(adjuster).toInstant());
+        Assert.assertEquals(jan2at6pm.toInstant(), jan1at6pm.with(adjuster).toInstant());
+        Assert.assertEquals(jan2at6pm.toInstant(), jan1at8pm.with(adjuster).toInstant());
+    }
 
-        final OffsetDateTime t1e = OffsetDateTime.of(2000, 1, 1, 18, 0, 0, 0, ZoneOffset.UTC);
-        final OffsetDateTime t2e = OffsetDateTime.of(2000, 1, 2, 18, 0, 0, 0, ZoneOffset.UTC);
+    @Test
+    public void testNextWeekday()
+    {
+        final OffsetDateTime fri = OffsetDateTime.of(1999, 12, 31, 16, 0, 0, 0, ZoneOffset.ofHours(0));
+        final OffsetDateTime sat = OffsetDateTime.of(2000, 1, 1, 17, 0, 0, 0, ZoneOffset.ofHours(1));
+        final OffsetDateTime sun = OffsetDateTime.of(2000, 1, 2, 18, 0, 0, 0, ZoneOffset.ofHours(2));
+        final OffsetDateTime mon = OffsetDateTime.of(2000, 1, 3, 19, 0, 0, 0, ZoneOffset.ofHours(3));
+        final OffsetDateTime tue = OffsetDateTime.of(2000, 1, 4, 20, 0, 0, 0, ZoneOffset.ofHours(4));
+        final OffsetDateTime wed = OffsetDateTime.of(2000, 1, 5, 21, 0, 0, 0, ZoneOffset.ofHours(5));
 
-        Assert.assertEquals(t1e, t1.with(adjuster));
-        Assert.assertEquals(t2e, t2.with(adjuster));
+        final TemporalAdjuster adjuster = SchedulingAdjusters.nextWeekday();
+
+        Assert.assertEquals(mon.toInstant(), fri.with(adjuster).toInstant());
+        Assert.assertEquals(mon.toInstant(), sat.with(adjuster).toInstant());
+        Assert.assertEquals(mon.toInstant(), sun.with(adjuster).toInstant());
+        Assert.assertEquals(tue.toInstant(), mon.with(adjuster).toInstant());
+        Assert.assertEquals(wed.toInstant(), tue.with(adjuster).toInstant());
     }
 }
 
