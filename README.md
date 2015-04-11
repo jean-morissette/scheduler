@@ -1,2 +1,2 @@
 # Scheduler
-A scheduled-execution ExecutorService using Java 8 Time.
+A clock-based ExecutorService using Java 8 Time. For when Quartz is just too heavy.
