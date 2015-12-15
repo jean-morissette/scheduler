@@ -8,6 +8,17 @@
     <artifactId>scheduler</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
+    <name>Scheduler</name>
+    <description>A clock-based ExecutorService using Java 8 Time. For when Quartz is just too heavy.</description>
+    <url>https://github.com/ajlane/scheduler</url>
+
+    <developers>
+        <developer>
+            <name>Aaron Lane</name>
+            <organizationUrl>http://www.ajlane.id.au</organizationUrl>
+        </developer>
+    </developers>
+
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
