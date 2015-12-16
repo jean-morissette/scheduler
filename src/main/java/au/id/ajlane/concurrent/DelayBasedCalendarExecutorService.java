@@ -18,10 +18,10 @@ import java.util.function.Function;
  * A straight-forward {@link au.id.ajlane.concurrent.CalendarExecutorService} that uses an internal {@link
  * java.util.concurrent.ScheduledExecutorService} to delay task execution according to difference between the current
  * time and the scheduled time.
- * <p/>
+ * <p>
  * This is the default {@code CalendarExecutorService} provided by utility methods on the {@code
  * CalendarExecutorService} interface.
- * <p/>
+ * <p>
  * Pending tasks are re-scheduled according to the {@link #getAdjustmentPeriod() adjustment period} (every 2 hours by
  * default). This allows the service to self-correct if the {@link Clock} falls out-of-sync with the internal timer. A
  * shorter adjustment period will allow the service to self-correct faster, but will incur greater runtime costs.
@@ -462,9 +462,9 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
     /**
      * Sets a new adjustment period for this service.
-     * <p/>
+     * <p>
      * All tasks are re-scheduled every adjustment period, in case the internal timer falls out-of-sync with the clock.
-     * <p/>
+     * <p>
      * The default adjustment period is 2 hours.
      *
      * @param adjustmentPeriod

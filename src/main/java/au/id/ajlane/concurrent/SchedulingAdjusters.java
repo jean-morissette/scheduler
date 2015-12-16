@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 /**
  * Utilities for producing instances of {@link java.time.temporal.TemporalAdjuster} that are useful for scheduling
  * regular tasks.
- * <p/>
+ * <p>
  * A key feature of the adjusters provided by these utilities is that they never adjust a given {@link Temporal} to be
  * earlier than it was before. This allows them to be arbitrarily combined using the {@link #chain} methods without
  * creating any infinite loops.
@@ -74,9 +74,9 @@ public abstract class SchedulingAdjusters
 
     /**
      * Advances to the same time on the next instance of a numbered day of month.
-     * <p/>
+     * <p>
      * If the day has already past for the current month or is the current day, the next month will be used.
-     * <p/>
+     * <p>
      * If the month is too short for the given day to exist, the last day of the month will be used.
      *
      * @param dayOfMonth
@@ -124,7 +124,7 @@ public abstract class SchedulingAdjusters
 
     /**
      * Advances to the same day in the next month.
-     * <p/>
+     * <p>
      * If the day does not exist, then the nearest date in next month will be used. For example, if the first date is
      * the 31st of January, the next two dates will be the 28th or 29th of February (as appropriate) and the 31st of
      * March.
@@ -155,9 +155,9 @@ public abstract class SchedulingAdjusters
 
     /**
      * Advances to the same time on the next instance of a numbered day of month.
-     * <p/>
+     * <p>
      * If the day has already past for the current month, the next month will be used.
-     * <p/>
+     * <p>
      * If the month is too short for the given day to exist, the last day of the month will be used.
      *
      * @param dayOfMonth
@@ -183,7 +183,7 @@ public abstract class SchedulingAdjusters
 
     /**
      * Advances to the same time on the next instance of a day-of-week.
-     * <p/>
+     * <p>
      * If the current day is the given day-of-week, no change is made.
      *
      * @param dayOfWeek

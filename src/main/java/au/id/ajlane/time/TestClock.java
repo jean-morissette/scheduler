@@ -9,7 +9,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * A clock which only advances time when prompted.
- * <p/>
+ * <p>
  * This is useful for consistently testing clock-based functions.
  */
 public final class TestClock extends Clock

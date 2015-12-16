@@ -28,6 +28,8 @@ public final class CalendarExecutorServiceTest
         );
         executor.setAdjustmentPeriod(Duration.ofMillis(500L));
 
+        CalendarExecutorService.singleThread();
+
         final CalendarFuture<Instant> tN1Future = executor.schedule(() -> tN1, tN1);
         final CalendarFuture<Instant> t0Future = executor.schedule(() -> t0, t0);
         final CalendarFuture<Instant> t1Future = executor.schedule(() -> t1, t1);

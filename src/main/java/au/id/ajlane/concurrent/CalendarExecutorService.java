@@ -12,10 +12,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A {@link java.util.concurrent.ScheduledExecutorService} which can schedule tasks to occur at particular times.
- * <p/>
+ * <p>
  * Implementations <em>may</em> delay tasks to execute after their schedule time, but <em>must not</em> execute tasks
  * before their scheduled time.
- * <p/>
+ * <p>
  * If there are no other scheduling concerns (such as priority), a {@code au.id.ajlane.concurrent.CalendarExecutorService}
  * should make a best-effort attempt to ensure that tasks are executed in time-sorted order.
  */
@@ -203,6 +203,8 @@ public interface CalendarExecutorService extends ScheduledExecutorService
     /**
      * Creates a new {@code CalendarExecutorService} which services tasks with a pool of threads.
      *
+     * @param clock
+     *         The clock to use for scheduling.
      * @param poolSize
      *         The number of threads in the pool.
      * @return A new {@code CalendarExecutorService}.
@@ -235,6 +237,8 @@ public interface CalendarExecutorService extends ScheduledExecutorService
     /**
      * Schedules a task to be executed at a particular time.
      *
+     * @param <V>
+     *         The type of the value returned by the task.
      * @param action
      *         The action to execute.
      * @param instant
@@ -288,7 +292,7 @@ public interface CalendarExecutorService extends ScheduledExecutorService
 
     /**
      * Schedules an action to be executed at regular intervals from a particular time.
-     * <p/>
+     * <p>
      * The service will not wait for the first task to finish before executing subsequent tasks. To schedule a fixed
      * delay between tasks, use {@code scheduleWithFixedDelay(Runnable, Instant, long, TimeUnit)}.
      *
@@ -313,7 +317,7 @@ public interface CalendarExecutorService extends ScheduledExecutorService
 
     /**
      * Schedules an action to be executed at regular intervals from a particular time.
-     * <p/>
+     * <p>
      * The service will not wait for the first task to finish before executing subsequent tasks. To schedule a fixed
      * delay between tasks, use {@code scheduleWithFixedDelay(Runnable, Instant, TemporalAmount)}.
      *

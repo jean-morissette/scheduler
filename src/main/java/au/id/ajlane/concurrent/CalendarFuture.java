@@ -6,7 +6,7 @@ import java.util.concurrent.ScheduledFuture;
 
 /**
  * A result-bearing, cancellable action which is scheduled to occur at a particular time.
- * <p/>
+ * <p>
  * All instances of {@code CalendarFuture} are also instances of {@link CompletionStage}.
  *
  * @see CalendarExecutorService
