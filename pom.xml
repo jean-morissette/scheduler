@@ -37,6 +37,12 @@
     </properties>
 
     <dependencies>
+        <!-- TODO: Shade this out so we have no runtime dependencies -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>4.5.1-1</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

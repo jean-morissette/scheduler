@@ -23,5 +23,5 @@ public interface ScheduleCallback<V>
      * @return An {@link java.time.Instant}. If the time has already passed, then the action should be scheduled to
      * occur as soon as possible. May not be {@code null}.
      */
-    public Instant getNext(final Instant previousInstant, final V previousValue);
+    Instant getNext(final Instant previousInstant, final V previousValue);
 }

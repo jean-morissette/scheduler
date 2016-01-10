@@ -6,9 +6,9 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 
 /**
- * An {@link java.util.concurrent.ExecutionException} which is caused by multiple tasks failing concurrently.
+ * An {@link ExecutionException} which is caused by multiple tasks failing concurrently.
  * <p>
- * Useful for implementing {@link java.util.concurrent.ExecutorService#invokeAny(java.util.Collection)}.
+ * Useful for implementing {@link java.util.concurrent.ExecutorService#invokeAny(Collection)}.
  */
 public class MultipleExecutionException extends ExecutionException
 {
@@ -22,7 +22,7 @@ public class MultipleExecutionException extends ExecutionException
     }
 
     /**
-     * Constructs a new {@code ParallelExecutionException}.
+     * Constructs a new {@code MultipleExecutionException}.
      *
      * @param causes
      *         The causes of the failures. Must not be null or empty.
@@ -33,7 +33,7 @@ public class MultipleExecutionException extends ExecutionException
     }
 
     /**
-     * Constructs a new {@code ParallelExecutionException}.
+     * Constructs a new {@code MultipleExecutionException}.
      *
      * @param causes
      *         The causes of the failures. Must not be null or empty.
@@ -45,9 +45,7 @@ public class MultipleExecutionException extends ExecutionException
 
     private MultipleExecutionException(final int count, final Iterator<Throwable> causes)
     {
-        super(
-                count + " concurrent tasks failed.", causes.next()
-        );
+        super(count + " concurrent tasks failed.", causes.next());
 
         while (causes.hasNext())
         {

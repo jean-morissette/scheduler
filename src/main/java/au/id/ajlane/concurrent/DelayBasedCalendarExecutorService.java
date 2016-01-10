@@ -480,11 +480,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
         this.adjustmentPeriod = adjustmentPeriod;
     }
 
-    /**
-     * Gets the {@link Clock} being used by this service to determine the current time.
-     *
-     * @return A {@link java.time.Clock}.
-     */
+    @Override
     public Clock getClock()
     {
         return clock;

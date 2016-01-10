@@ -2,6 +2,7 @@ package au.id.ajlane.concurrent;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import au.id.ajlane.time.TestClock;
@@ -22,10 +23,9 @@ public final class CalendarExecutorServiceTest
         final Instant t3 = t2.plus(interval);
 
         final TestClock clock = new TestClock(interval, t0);
-        @SuppressWarnings("CastToConcreteClass")
-        final DelayBasedCalendarExecutorService executor = (DelayBasedCalendarExecutorService) CalendarExecutorService.threadPool(
-                clock
-        );
+
+        final DelayBasedCalendarExecutorService executor =
+                DelayBasedCalendarExecutorService.wrap(clock, Executors.newSingleThreadScheduledExecutor());
         executor.setAdjustmentPeriod(Duration.ofMillis(500L));
 
         CalendarExecutorService.singleThread();
