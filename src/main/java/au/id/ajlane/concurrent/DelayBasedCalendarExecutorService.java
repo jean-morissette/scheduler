@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 Aaron Lane
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package au.id.ajlane.concurrent;
 
 import java.text.MessageFormat;
@@ -5,7 +21,16 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -18,10 +43,10 @@ import java.util.function.Function;
  * A straight-forward {@link au.id.ajlane.concurrent.CalendarExecutorService} that uses an internal {@link
  * java.util.concurrent.ScheduledExecutorService} to delay task execution according to difference between the current
  * time and the scheduled time.
- * <p>
+ * <p/>
  * This is the default {@code CalendarExecutorService} provided by utility methods on the {@code
  * CalendarExecutorService} interface.
- * <p>
+ * <p/>
  * Pending tasks are re-scheduled according to the {@link #getAdjustmentPeriod() adjustment period} (every 2 hours by
  * default). This allows the service to self-correct if the {@link Clock} falls out-of-sync with the internal timer. A
  * shorter adjustment period will allow the service to self-correct faster, but will incur greater runtime costs.
@@ -32,14 +57,14 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
     private static final class WrappedCompletableCalendarFuture<V> implements CalendarFuture<V>
     {
         public static <T> WrappedCompletableCalendarFuture<T> wrap(
-                final Instant instant, final CompletableFuture<T> future
+            final Instant instant, final CompletableFuture<T> future
         )
         {
             return wrap(Clock.systemDefaultZone(), instant, future);
         }
 
         public static <T> WrappedCompletableCalendarFuture<T> wrap(
-                final Clock clock, final Instant instant, final CompletableFuture<T> future
+            final Clock clock, final Instant instant, final CompletableFuture<T> future
         )
         {
             return new WrappedCompletableCalendarFuture<>(clock, instant, future);
@@ -50,7 +75,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
         private final Instant instant;
 
         private WrappedCompletableCalendarFuture(
-                final Clock clock, final Instant instant, final CompletableFuture<V> future
+            final Clock clock, final Instant instant, final CompletableFuture<V> future
         )
         {
             this.clock = clock;
@@ -84,7 +109,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public V get(final long timeout, final TimeUnit unit)
-                throws InterruptedException, ExecutionException, TimeoutException
+            throws InterruptedException, ExecutionException, TimeoutException
         {
             return future.get(timeout, unit);
         }
@@ -99,7 +124,8 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
         public long getDelay(final TimeUnit unit)
         {
             final Instant now = clock.instant();
-            return Duration.between(instant, now).get(TimeUnits.toTemporalUnit(unit));
+            return Duration.between(instant, now)
+                .get(TimeUnits.toTemporalUnit(unit));
         }
 
         @Override
@@ -122,7 +148,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public <U> CalendarFuture<U> thenApplyAsync(
-                final Function<? super V, ? extends U> fn, final Executor executor
+            final Function<? super V, ? extends U> fn, final Executor executor
         )
         {
             return wrap(future.thenApplyAsync(fn, executor));
@@ -142,7 +168,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public CalendarFuture<Void> thenAcceptAsync(
-                final Consumer<? super V> action, final Executor executor
+            final Consumer<? super V> action, final Executor executor
         )
         {
             return wrap(future.thenAcceptAsync(action, executor));
@@ -162,7 +188,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public CalendarFuture<Void> thenRunAsync(
-                final Runnable action, final Executor executor
+            final Runnable action, final Executor executor
         )
         {
             return wrap(future.thenRunAsync(action, executor));
@@ -170,7 +196,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public <U, V1> CalendarFuture<V1> thenCombine(
-                final CompletionStage<? extends U> other, final BiFunction<? super V, ? super U, ? extends V1> fn
+            final CompletionStage<? extends U> other, final BiFunction<? super V, ? super U, ? extends V1> fn
         )
         {
             return wrap(future.thenCombine(other, fn));
@@ -178,7 +204,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public <U, V1> CalendarFuture<V1> thenCombineAsync(
-                final CompletionStage<? extends U> other, final BiFunction<? super V, ? super U, ? extends V1> fn
+            final CompletionStage<? extends U> other, final BiFunction<? super V, ? super U, ? extends V1> fn
         )
         {
             return wrap(future.thenCombineAsync(other, fn));
@@ -186,9 +212,9 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public <U, V1> CalendarFuture<V1> thenCombineAsync(
-                final CompletionStage<? extends U> other,
-                final BiFunction<? super V, ? super U, ? extends V1> fn,
-                final Executor executor
+            final CompletionStage<? extends U> other,
+            final BiFunction<? super V, ? super U, ? extends V1> fn,
+            final Executor executor
         )
         {
             return wrap(future.thenCombineAsync(other, fn, executor));
@@ -196,7 +222,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public <U> CalendarFuture<Void> thenAcceptBoth(
-                final CompletionStage<? extends U> other, final BiConsumer<? super V, ? super U> action
+            final CompletionStage<? extends U> other, final BiConsumer<? super V, ? super U> action
         )
         {
             return wrap(future.thenAcceptBoth(other, action));
@@ -204,7 +230,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public <U> CalendarFuture<Void> thenAcceptBothAsync(
-                final CompletionStage<? extends U> other, final BiConsumer<? super V, ? super U> action
+            final CompletionStage<? extends U> other, final BiConsumer<? super V, ? super U> action
         )
         {
             return wrap(future.thenAcceptBothAsync(other, action));
@@ -212,9 +238,9 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public <U> CalendarFuture<Void> thenAcceptBothAsync(
-                final CompletionStage<? extends U> other,
-                final BiConsumer<? super V, ? super U> action,
-                final Executor executor
+            final CompletionStage<? extends U> other,
+            final BiConsumer<? super V, ? super U> action,
+            final Executor executor
         )
         {
             return wrap(future.thenAcceptBothAsync(other, action, executor));
@@ -222,7 +248,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public CalendarFuture<Void> runAfterBoth(
-                final CompletionStage<?> other, final Runnable action
+            final CompletionStage<?> other, final Runnable action
         )
         {
             return wrap(future.runAfterBoth(other, action));
@@ -230,7 +256,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public CalendarFuture<Void> runAfterBothAsync(
-                final CompletionStage<?> other, final Runnable action
+            final CompletionStage<?> other, final Runnable action
         )
         {
             return wrap(future.runAfterBothAsync(other, action));
@@ -238,7 +264,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public CalendarFuture<Void> runAfterBothAsync(
-                final CompletionStage<?> other, final Runnable action, final Executor executor
+            final CompletionStage<?> other, final Runnable action, final Executor executor
         )
         {
             return wrap(future.runAfterBothAsync(other, action, executor));
@@ -246,7 +272,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public <U> CalendarFuture<U> applyToEither(
-                final CompletionStage<? extends V> other, final Function<? super V, U> fn
+            final CompletionStage<? extends V> other, final Function<? super V, U> fn
         )
         {
             return wrap(future.applyToEither(other, fn));
@@ -254,7 +280,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public <U> CalendarFuture<U> applyToEitherAsync(
-                final CompletionStage<? extends V> other, final Function<? super V, U> fn
+            final CompletionStage<? extends V> other, final Function<? super V, U> fn
         )
         {
             return wrap(future.applyToEitherAsync(other, fn));
@@ -262,7 +288,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public <U> CalendarFuture<U> applyToEitherAsync(
-                final CompletionStage<? extends V> other, final Function<? super V, U> fn, final Executor executor
+            final CompletionStage<? extends V> other, final Function<? super V, U> fn, final Executor executor
         )
         {
             return wrap(future.applyToEitherAsync(other, fn, executor));
@@ -270,7 +296,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public CalendarFuture<Void> acceptEither(
-                final CompletionStage<? extends V> other, final Consumer<? super V> action
+            final CompletionStage<? extends V> other, final Consumer<? super V> action
         )
         {
             return wrap(future.acceptEither(other, action));
@@ -278,7 +304,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public CalendarFuture<Void> acceptEitherAsync(
-                final CompletionStage<? extends V> other, final Consumer<? super V> action
+            final CompletionStage<? extends V> other, final Consumer<? super V> action
         )
         {
             return wrap(future.acceptEitherAsync(other, action));
@@ -286,7 +312,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public CalendarFuture<Void> acceptEitherAsync(
-                final CompletionStage<? extends V> other, final Consumer<? super V> action, final Executor executor
+            final CompletionStage<? extends V> other, final Consumer<? super V> action, final Executor executor
         )
         {
             return wrap(future.acceptEitherAsync(other, action, executor));
@@ -294,7 +320,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public CalendarFuture<Void> runAfterEither(
-                final CompletionStage<?> other, final Runnable action
+            final CompletionStage<?> other, final Runnable action
         )
         {
             return wrap(future.runAfterEither(other, action));
@@ -302,7 +328,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public CalendarFuture<Void> runAfterEitherAsync(
-                final CompletionStage<?> other, final Runnable action
+            final CompletionStage<?> other, final Runnable action
         )
         {
             return wrap(future.runAfterEitherAsync(other, action));
@@ -310,7 +336,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public CalendarFuture<Void> runAfterEitherAsync(
-                final CompletionStage<?> other, final Runnable action, final Executor executor
+            final CompletionStage<?> other, final Runnable action, final Executor executor
         )
         {
             return wrap(future.runAfterEitherAsync(other, action, executor));
@@ -330,7 +356,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public <U> CalendarFuture<U> thenComposeAsync(
-                final Function<? super V, ? extends CompletionStage<U>> fn, final Executor executor
+            final Function<? super V, ? extends CompletionStage<U>> fn, final Executor executor
         )
         {
             return wrap(future.thenComposeAsync(fn, executor));
@@ -356,7 +382,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public CalendarFuture<V> whenCompleteAsync(
-                final BiConsumer<? super V, ? super Throwable> action, final Executor executor
+            final BiConsumer<? super V, ? super Throwable> action, final Executor executor
         )
         {
             return wrap(future.whenCompleteAsync(action, executor));
@@ -376,7 +402,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
         @Override
         public <U> CalendarFuture<U> handleAsync(
-                final BiFunction<? super V, Throwable, ? extends U> fn, final Executor executor
+            final BiFunction<? super V, Throwable, ? extends U> fn, final Executor executor
         )
         {
             return wrap(future.handleAsync(fn, executor));
@@ -388,18 +414,20 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
             return future;
         }
 
-        @Override
-        public String toString()
-        {
-            return MessageFormat.format(
-                    "WrappedCompletableCalendarFuture'{'clock={0}, future={1}, instant={2}'}'", clock, future, instant
-            );
-        }
-
         public <T> WrappedCompletableCalendarFuture<T> wrap(final CompletableFuture<T> future)
         {
             return wrap(clock, instant, future);
         }
+
+        @Override
+        public String toString()
+        {
+            return MessageFormat.format(
+                "WrappedCompletableCalendarFuture'{'clock={0}, future={1}, instant={2}'}'", clock, future, instant
+            );
+        }
+
+
     }
 
     /**
@@ -407,7 +435,8 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
      * DelayBasedCalendarExecutorService}.
      *
      * @param executor
-     *         The underlying executor. Must not be {@code null}.
+     *     The underlying executor. Must not be {@code null}.
+     *
      * @return A new {@code DelayBasedCalendarExecutorService}.
      */
     public static DelayBasedCalendarExecutorService wrap(final ScheduledExecutorService executor)
@@ -420,15 +449,22 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
      * DelayBasedCalendarExecutorService}.
      *
      * @param clock
-     *         The clock to use to determine the current time. Must not be {@code null}.
+     *     The clock to use to determine the current time. Must not be {@code null}.
      * @param executor
-     *         The underlying executor. Must not be {@code null}.
+     *     The underlying executor. Must not be {@code null}.
+     *
      * @return A new {@code DelayBasedCalendarExecutorService}.
      */
     public static DelayBasedCalendarExecutorService wrap(final Clock clock, final ScheduledExecutorService executor)
     {
-        if (clock == null) { throw new NullPointerException("The clock must not be null."); }
-        if (executor == null) { throw new NullPointerException("The executor must not be null."); }
+        if (clock == null)
+        {
+            throw new NullPointerException("The clock must not be null.");
+        }
+        if (executor == null)
+        {
+            throw new NullPointerException("The executor must not be null.");
+        }
         return new DelayBasedCalendarExecutorService(clock, executor);
     }
 
@@ -440,10 +476,10 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
      * Constructs a new {@code DelayBasedCalendarExecutorService}.
      *
      * @param executor
-     *         The underlying executor.
+     *     The underlying executor.
      */
     private DelayBasedCalendarExecutorService(
-            final Clock clock, final ScheduledExecutorService executor
+        final Clock clock, final ScheduledExecutorService executor
     )
     {
         this.clock = clock;
@@ -462,17 +498,20 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
     /**
      * Sets a new adjustment period for this service.
-     * <p>
+     * <p/>
      * All tasks are re-scheduled every adjustment period, in case the internal timer falls out-of-sync with the clock.
-     * <p>
+     * <p/>
      * The default adjustment period is 2 hours.
      *
      * @param adjustmentPeriod
-     *         The new adjustment period. Must not be {@code null} or negative.
+     *     The new adjustment period. Must not be {@code null} or negative.
      */
     public void setAdjustmentPeriod(final Duration adjustmentPeriod)
     {
-        if (adjustmentPeriod == null) { throw new NullPointerException("The adjustment period cannot be null."); }
+        if (adjustmentPeriod == null)
+        {
+            throw new NullPointerException("The adjustment period cannot be null.");
+        }
         if (adjustmentPeriod.isNegative())
         {
             throw new IllegalArgumentException("The adjustment period cannot be negative.");
@@ -486,14 +525,9 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
         return clock;
     }
 
-    public ScheduledExecutorService getExecutor()
-    {
-        return executor;
-    }
-
     @Override
     public <V> CalendarFuture<V> scheduleDynamically(
-            final Callable<V> action, final Instant initial, final ScheduleCallback<V> callback
+        final Callable<V> action, final Instant initial, final ScheduleCallback<V> callback
     )
     {
         final AtomicReference<ScheduledFuture<?>> future = new AtomicReference<>();
@@ -503,97 +537,118 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
             @Override
             public boolean cancel(final boolean mayInterruptIfRunning)
             {
-                lock.readLock().lock();
+                lock.readLock()
+                    .lock();
                 try
                 {
-                    future.get().cancel(mayInterruptIfRunning);
+                    future.get()
+                        .cancel(mayInterruptIfRunning);
                     return super.cancel(mayInterruptIfRunning);
                 }
                 finally
                 {
-                    lock.readLock().unlock();
+                    lock.readLock()
+                        .unlock();
                 }
             }
         };
-        lock.writeLock().lock();
+        lock.writeLock()
+            .lock();
         try
         {
             future.set(
-                    executor.schedule(
-                            new Callable<Void>()
+                executor.schedule(
+                    new Callable<Void>()
+                    {
+                        @Override
+                        public Void call()
+                        {
+                            try
                             {
-                                @Override
-                                public Void call()
+                                final Duration countdown = Duration.between(initial, clock.instant());
+                                if (countdown.isNegative())
                                 {
+                                    lock.writeLock()
+                                        .lock();
                                     try
                                     {
-                                        final Duration countdown = Duration.between(initial, clock.instant());
-                                        if (countdown.isNegative())
+                                        future.lazySet(
+                                            executor.schedule(
+                                                this, Math.min(
+                                                    countdown.negated()
+                                                        .toNanos(),
+                                                    adjustmentPeriod.toNanos()
+                                                ), TimeUnit.NANOSECONDS
+                                            )
+                                        );
+                                    }
+                                    finally
+                                    {
+                                        lock.writeLock()
+                                            .unlock();
+                                    }
+                                }
+                                else
+                                {
+                                    final V result = action.call();
+                                    if (callback != null)
+                                    {
+                                        final Instant next = callback.getNext(initial, result);
+                                        if (next != null)
                                         {
-                                            lock.writeLock().lock();
+                                            lock.writeLock()
+                                                .lock();
                                             try
                                             {
                                                 future.lazySet(
-                                                        executor.schedule(
-                                                                this, Math.min(
-                                                                        countdown.negated().toNanos(),
-                                                                        adjustmentPeriod.toNanos()
-                                                                ), TimeUnit.NANOSECONDS
-                                                        )
+                                                    executor.schedule(
+                                                        this, Math.min(
+                                                            Duration.between(clock.instant(), next)
+                                                                .toNanos(),
+                                                            adjustmentPeriod.toNanos()
+                                                        ), TimeUnit.NANOSECONDS
+                                                    )
                                                 );
                                             }
                                             finally
                                             {
-                                                lock.writeLock().unlock();
+                                                lock.writeLock()
+                                                    .unlock();
                                             }
                                         }
-                                        else
-                                        {
-                                            final V result = action.call();
-                                            if (callback != null)
-                                            {
-                                                final Instant next = callback.getNext(initial, result);
-                                                if (next != null)
-                                                {
-                                                    lock.writeLock().lock();
-                                                    try
-                                                    {
-                                                        future.lazySet(
-                                                                executor.schedule(
-                                                                        this, Math.min(
-                                                                                Duration.between(clock.instant(), next)
-                                                                                        .toNanos(),
-                                                                                adjustmentPeriod.toNanos()
-                                                                        ), TimeUnit.NANOSECONDS
-                                                                )
-                                                        );
-                                                    }
-                                                    finally
-                                                    {
-                                                        lock.writeLock().unlock();
-                                                    }
-                                                }
-                                            }
-                                            completable.complete(result);
-                                        }
                                     }
-                                    catch (final Exception ex)
-                                    {
-                                        completable.completeExceptionally(ex);
-                                    }
-                                    return null;
+                                    completable.complete(result);
                                 }
-                            },
-                            Math.min(Duration.between(clock.instant(), initial).toNanos(), adjustmentPeriod.toNanos()),
-                            TimeUnit.NANOSECONDS
-                    )
+                            }
+                            catch (final Exception ex)
+                            {
+                                completable.completeExceptionally(ex);
+                            }
+                            return null;
+                        }
+                    },
+                    Math.min(Duration.between(clock.instant(), initial)
+                        .toNanos(), adjustmentPeriod.toNanos()),
+                    TimeUnit.NANOSECONDS
+                )
             );
         }
         finally
         {
-            lock.writeLock().unlock();
+            lock.writeLock()
+                .unlock();
         }
         return WrappedCompletableCalendarFuture.wrap(clock, initial, completable);
+    }
+
+    /**
+     * The underlying executor.
+     *
+     * @return The executor.
+     */
+    public ScheduledExecutorService getExecutor()
+    {
+        return executor;
     }
 
     @Override
@@ -630,10 +685,10 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
     public String toString()
     {
         return MessageFormat.format(
-                "DelayBasedCalendarExecutorService'{'clock={0}, executor={1}, adjustmentPeriod={2}'}'",
-                clock,
-                executor,
-                adjustmentPeriod
+            "DelayBasedCalendarExecutorService'{'clock={0}, executor={1}, adjustmentPeriod={2}'}'",
+            clock,
+            executor,
+            adjustmentPeriod
         );
     }
 }

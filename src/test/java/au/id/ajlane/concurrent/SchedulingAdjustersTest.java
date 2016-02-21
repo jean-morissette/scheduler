@@ -1,12 +1,28 @@
+/*
+ * Copyright 2016 Aaron Lane
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package au.id.ajlane.concurrent;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.ZoneOffset;
 import java.time.temporal.TemporalAdjuster;
-
-import org.junit.Assert;
-import org.junit.Test;
 
 public final class SchedulingAdjustersTest
 {
@@ -18,13 +34,19 @@ public final class SchedulingAdjustersTest
         final OffsetDateTime feb15 = OffsetDateTime.of(2000, 2, 16, 10, 0, 0, 0, ZoneOffset.ofHours(18));
 
         final TemporalAdjuster adjuster = SchedulingAdjusters.chain(
-                SchedulingAdjusters.nextOrSameTime(OffsetTime.of(12, 0, 0, 0, ZoneOffset.ofHours(-4))),
-                SchedulingAdjusters.nextOrSameDayOfMonth(15),
-                SchedulingAdjusters.nextOrSameWeekday()
+            SchedulingAdjusters.nextOrSameTime(OffsetTime.of(12, 0, 0, 0, ZoneOffset.ofHours(-4))),
+            SchedulingAdjusters.nextOrSameDayOfMonth(15),
+            SchedulingAdjusters.nextOrSameWeekday()
         );
 
-        Assert.assertEquals(jan17.toInstant(), jan1.with(adjuster).toInstant());
-        Assert.assertEquals(feb15.toInstant(), jan17.with(adjuster).toInstant());
+        Assert.assertEquals(jan17.toInstant(),
+            jan1.with(adjuster)
+                .toInstant()
+        );
+        Assert.assertEquals(feb15.toInstant(),
+            jan17.with(adjuster)
+                .toInstant()
+        );
     }
 
     @Test
@@ -35,7 +57,10 @@ public final class SchedulingAdjustersTest
 
         final TemporalAdjuster adjuster = SchedulingAdjusters.nextDay();
 
-        Assert.assertEquals(jan1.toInstant(), dec31.with(adjuster).toInstant());
+        Assert.assertEquals(jan1.toInstant(),
+            dec31.with(adjuster)
+                .toInstant()
+        );
     }
 
     @Test
@@ -49,14 +74,29 @@ public final class SchedulingAdjustersTest
 
         final TemporalAdjuster to15th = SchedulingAdjusters.nextDayOfMonth(15);
 
-        Assert.assertEquals(feb15.toInstant(), jan31.with(to15th).toInstant());
-        Assert.assertEquals(feb15.toInstant(), feb3.with(to15th).toInstant());
+        Assert.assertEquals(feb15.toInstant(),
+            jan31.with(to15th)
+                .toInstant()
+        );
+        Assert.assertEquals(feb15.toInstant(),
+            feb3.with(to15th)
+                .toInstant()
+        );
 
         final TemporalAdjuster to31st = SchedulingAdjusters.nextDayOfMonth(31);
 
-        Assert.assertEquals(jan31.toInstant(), jan1.with(to31st).toInstant());
-        Assert.assertEquals(feb29.toInstant(), jan31.with(to31st).toInstant());
-        Assert.assertEquals(feb29.toInstant(), feb15.with(to31st).toInstant());
+        Assert.assertEquals(jan31.toInstant(),
+            jan1.with(to31st)
+                .toInstant()
+        );
+        Assert.assertEquals(feb29.toInstant(),
+            jan31.with(to31st)
+                .toInstant()
+        );
+        Assert.assertEquals(feb29.toInstant(),
+            feb15.with(to31st)
+                .toInstant()
+        );
     }
 
     @Test
@@ -118,18 +158,27 @@ public final class SchedulingAdjustersTest
         final OffsetDateTime jan2at6pm = OffsetDateTime.of(2000, 1, 3, 12, 0, 0, 0, ZoneOffset.ofHours(18));
 
         final TemporalAdjuster adjuster = SchedulingAdjusters.nextTime(
-                OffsetTime.of(
-                        14,
-                        0,
-                        0,
-                        0,
-                        ZoneOffset.ofHours(-4)
-                )
+            OffsetTime.of(
+                14,
+                0,
+                0,
+                0,
+                ZoneOffset.ofHours(-4)
+            )
         );
 
-        Assert.assertEquals(jan1at6pm.toInstant(), jan1at4pm.with(adjuster).toInstant());
-        Assert.assertEquals(jan2at6pm.toInstant(), jan1at6pm.with(adjuster).toInstant());
-        Assert.assertEquals(jan2at6pm.toInstant(), jan1at8pm.with(adjuster).toInstant());
+        Assert.assertEquals(jan1at6pm.toInstant(),
+            jan1at4pm.with(adjuster)
+                .toInstant()
+        );
+        Assert.assertEquals(jan2at6pm.toInstant(),
+            jan1at6pm.with(adjuster)
+                .toInstant()
+        );
+        Assert.assertEquals(jan2at6pm.toInstant(),
+            jan1at8pm.with(adjuster)
+                .toInstant()
+        );
     }
 
     @Test
@@ -144,11 +193,26 @@ public final class SchedulingAdjustersTest
 
         final TemporalAdjuster adjuster = SchedulingAdjusters.nextWeekday();
 
-        Assert.assertEquals(mon.toInstant(), fri.with(adjuster).toInstant());
-        Assert.assertEquals(mon.toInstant(), sat.with(adjuster).toInstant());
-        Assert.assertEquals(mon.toInstant(), sun.with(adjuster).toInstant());
-        Assert.assertEquals(tue.toInstant(), mon.with(adjuster).toInstant());
-        Assert.assertEquals(wed.toInstant(), tue.with(adjuster).toInstant());
+        Assert.assertEquals(mon.toInstant(),
+            fri.with(adjuster)
+                .toInstant()
+        );
+        Assert.assertEquals(mon.toInstant(),
+            sat.with(adjuster)
+                .toInstant()
+        );
+        Assert.assertEquals(mon.toInstant(),
+            sun.with(adjuster)
+                .toInstant()
+        );
+        Assert.assertEquals(tue.toInstant(),
+            mon.with(adjuster)
+                .toInstant()
+        );
+        Assert.assertEquals(wed.toInstant(),
+            tue.with(adjuster)
+                .toInstant()
+        );
     }
 }
 
