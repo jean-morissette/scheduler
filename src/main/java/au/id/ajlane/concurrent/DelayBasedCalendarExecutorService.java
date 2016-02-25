@@ -43,10 +43,10 @@ import java.util.function.Function;
  * A straight-forward {@link au.id.ajlane.concurrent.CalendarExecutorService} that uses an internal {@link
  * java.util.concurrent.ScheduledExecutorService} to delay task execution according to difference between the current
  * time and the scheduled time.
- * <p/>
+ * <p>
  * This is the default {@code CalendarExecutorService} provided by utility methods on the {@code
  * CalendarExecutorService} interface.
- * <p/>
+ * <p>
  * Pending tasks are re-scheduled according to the {@link #getAdjustmentPeriod() adjustment period} (every 2 hours by
  * default). This allows the service to self-correct if the {@link Clock} falls out-of-sync with the internal timer. A
  * shorter adjustment period will allow the service to self-correct faster, but will incur greater runtime costs.
@@ -84,21 +84,69 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
         }
 
         @Override
+        public CalendarFuture<Void> acceptEither(
+            final CompletionStage<? extends V> other, final Consumer<? super V> action
+        )
+        {
+            return wrap(future.acceptEither(other, action));
+        }
+
+        @Override
+        public CalendarFuture<Void> acceptEitherAsync(
+            final CompletionStage<? extends V> other, final Consumer<? super V> action
+        )
+        {
+            return wrap(future.acceptEitherAsync(other, action));
+        }
+
+        @Override
+        public CalendarFuture<Void> acceptEitherAsync(
+            final CompletionStage<? extends V> other, final Consumer<? super V> action, final Executor executor
+        )
+        {
+            return wrap(future.acceptEitherAsync(other, action, executor));
+        }
+
+        @Override
+        public <U> CalendarFuture<U> applyToEither(
+            final CompletionStage<? extends V> other, final Function<? super V, U> fn
+        )
+        {
+            return wrap(future.applyToEither(other, fn));
+        }
+
+        @Override
+        public <U> CalendarFuture<U> applyToEitherAsync(
+            final CompletionStage<? extends V> other, final Function<? super V, U> fn
+        )
+        {
+            return wrap(future.applyToEitherAsync(other, fn));
+        }
+
+        @Override
+        public <U> CalendarFuture<U> applyToEitherAsync(
+            final CompletionStage<? extends V> other, final Function<? super V, U> fn, final Executor executor
+        )
+        {
+            return wrap(future.applyToEitherAsync(other, fn, executor));
+        }
+
+        @Override
         public boolean cancel(final boolean mayInterruptIfRunning)
         {
             return future.cancel(mayInterruptIfRunning);
         }
 
         @Override
-        public boolean isCancelled()
+        public int compareTo(final Delayed o)
         {
-            return future.isCancelled();
+            return Long.compare(getDelay(TimeUnit.NANOSECONDS), o.getDelay(TimeUnit.NANOSECONDS));
         }
 
         @Override
-        public boolean isDone()
+        public CalendarFuture<V> exceptionally(final Function<Throwable, ? extends V> fn)
         {
-            return future.isDone();
+            return wrap(future.exceptionally(fn));
         }
 
         @Override
@@ -112,12 +160,6 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
             throws InterruptedException, ExecutionException, TimeoutException
         {
             return future.get(timeout, unit);
-        }
-
-        @Override
-        public int compareTo(final Delayed o)
-        {
-            return Long.compare(getDelay(TimeUnit.NANOSECONDS), o.getDelay(TimeUnit.NANOSECONDS));
         }
 
         @Override
@@ -135,23 +177,83 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
         }
 
         @Override
-        public <U> CalendarFuture<U> thenApply(final Function<? super V, ? extends U> fn)
+        public <U> CalendarFuture<U> handle(final BiFunction<? super V, Throwable, ? extends U> fn)
         {
-            return wrap(future.thenApply(fn));
+            return wrap(future.handle(fn));
         }
 
         @Override
-        public <U> CalendarFuture<U> thenApplyAsync(final Function<? super V, ? extends U> fn)
+        public <U> CalendarFuture<U> handleAsync(final BiFunction<? super V, Throwable, ? extends U> fn)
         {
-            return wrap(future.thenApplyAsync(fn));
+            return wrap(future.handleAsync(fn));
         }
 
         @Override
-        public <U> CalendarFuture<U> thenApplyAsync(
-            final Function<? super V, ? extends U> fn, final Executor executor
+        public <U> CalendarFuture<U> handleAsync(
+            final BiFunction<? super V, Throwable, ? extends U> fn, final Executor executor
         )
         {
-            return wrap(future.thenApplyAsync(fn, executor));
+            return wrap(future.handleAsync(fn, executor));
+        }
+
+        @Override
+        public boolean isCancelled()
+        {
+            return future.isCancelled();
+        }
+
+        @Override
+        public boolean isDone()
+        {
+            return future.isDone();
+        }
+
+        @Override
+        public CalendarFuture<Void> runAfterBoth(
+            final CompletionStage<?> other, final Runnable action
+        )
+        {
+            return wrap(future.runAfterBoth(other, action));
+        }
+
+        @Override
+        public CalendarFuture<Void> runAfterBothAsync(
+            final CompletionStage<?> other, final Runnable action
+        )
+        {
+            return wrap(future.runAfterBothAsync(other, action));
+        }
+
+        @Override
+        public CalendarFuture<Void> runAfterBothAsync(
+            final CompletionStage<?> other, final Runnable action, final Executor executor
+        )
+        {
+            return wrap(future.runAfterBothAsync(other, action, executor));
+        }
+
+        @Override
+        public CalendarFuture<Void> runAfterEither(
+            final CompletionStage<?> other, final Runnable action
+        )
+        {
+            return wrap(future.runAfterEither(other, action));
+        }
+
+        @Override
+        public CalendarFuture<Void> runAfterEitherAsync(
+            final CompletionStage<?> other, final Runnable action
+        )
+        {
+            return wrap(future.runAfterEitherAsync(other, action));
+        }
+
+        @Override
+        public CalendarFuture<Void> runAfterEitherAsync(
+            final CompletionStage<?> other, final Runnable action, final Executor executor
+        )
+        {
+            return wrap(future.runAfterEitherAsync(other, action, executor));
         }
 
         @Override
@@ -172,52 +274,6 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
         )
         {
             return wrap(future.thenAcceptAsync(action, executor));
-        }
-
-        @Override
-        public CalendarFuture<Void> thenRun(final Runnable action)
-        {
-            return wrap(future.thenRun(action));
-        }
-
-        @Override
-        public CalendarFuture<Void> thenRunAsync(final Runnable action)
-        {
-            return wrap(future.thenRunAsync(action));
-        }
-
-        @Override
-        public CalendarFuture<Void> thenRunAsync(
-            final Runnable action, final Executor executor
-        )
-        {
-            return wrap(future.thenRunAsync(action, executor));
-        }
-
-        @Override
-        public <U, V1> CalendarFuture<V1> thenCombine(
-            final CompletionStage<? extends U> other, final BiFunction<? super V, ? super U, ? extends V1> fn
-        )
-        {
-            return wrap(future.thenCombine(other, fn));
-        }
-
-        @Override
-        public <U, V1> CalendarFuture<V1> thenCombineAsync(
-            final CompletionStage<? extends U> other, final BiFunction<? super V, ? super U, ? extends V1> fn
-        )
-        {
-            return wrap(future.thenCombineAsync(other, fn));
-        }
-
-        @Override
-        public <U, V1> CalendarFuture<V1> thenCombineAsync(
-            final CompletionStage<? extends U> other,
-            final BiFunction<? super V, ? super U, ? extends V1> fn,
-            final Executor executor
-        )
-        {
-            return wrap(future.thenCombineAsync(other, fn, executor));
         }
 
         @Override
@@ -247,99 +303,49 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
         }
 
         @Override
-        public CalendarFuture<Void> runAfterBoth(
-            final CompletionStage<?> other, final Runnable action
-        )
+        public <U> CalendarFuture<U> thenApply(final Function<? super V, ? extends U> fn)
         {
-            return wrap(future.runAfterBoth(other, action));
+            return wrap(future.thenApply(fn));
         }
 
         @Override
-        public CalendarFuture<Void> runAfterBothAsync(
-            final CompletionStage<?> other, final Runnable action
-        )
+        public <U> CalendarFuture<U> thenApplyAsync(final Function<? super V, ? extends U> fn)
         {
-            return wrap(future.runAfterBothAsync(other, action));
+            return wrap(future.thenApplyAsync(fn));
         }
 
         @Override
-        public CalendarFuture<Void> runAfterBothAsync(
-            final CompletionStage<?> other, final Runnable action, final Executor executor
+        public <U> CalendarFuture<U> thenApplyAsync(
+            final Function<? super V, ? extends U> fn, final Executor executor
         )
         {
-            return wrap(future.runAfterBothAsync(other, action, executor));
+            return wrap(future.thenApplyAsync(fn, executor));
         }
 
         @Override
-        public <U> CalendarFuture<U> applyToEither(
-            final CompletionStage<? extends V> other, final Function<? super V, U> fn
+        public <U, V1> CalendarFuture<V1> thenCombine(
+            final CompletionStage<? extends U> other, final BiFunction<? super V, ? super U, ? extends V1> fn
         )
         {
-            return wrap(future.applyToEither(other, fn));
+            return wrap(future.thenCombine(other, fn));
         }
 
         @Override
-        public <U> CalendarFuture<U> applyToEitherAsync(
-            final CompletionStage<? extends V> other, final Function<? super V, U> fn
+        public <U, V1> CalendarFuture<V1> thenCombineAsync(
+            final CompletionStage<? extends U> other, final BiFunction<? super V, ? super U, ? extends V1> fn
         )
         {
-            return wrap(future.applyToEitherAsync(other, fn));
+            return wrap(future.thenCombineAsync(other, fn));
         }
 
         @Override
-        public <U> CalendarFuture<U> applyToEitherAsync(
-            final CompletionStage<? extends V> other, final Function<? super V, U> fn, final Executor executor
+        public <U, V1> CalendarFuture<V1> thenCombineAsync(
+            final CompletionStage<? extends U> other,
+            final BiFunction<? super V, ? super U, ? extends V1> fn,
+            final Executor executor
         )
         {
-            return wrap(future.applyToEitherAsync(other, fn, executor));
-        }
-
-        @Override
-        public CalendarFuture<Void> acceptEither(
-            final CompletionStage<? extends V> other, final Consumer<? super V> action
-        )
-        {
-            return wrap(future.acceptEither(other, action));
-        }
-
-        @Override
-        public CalendarFuture<Void> acceptEitherAsync(
-            final CompletionStage<? extends V> other, final Consumer<? super V> action
-        )
-        {
-            return wrap(future.acceptEitherAsync(other, action));
-        }
-
-        @Override
-        public CalendarFuture<Void> acceptEitherAsync(
-            final CompletionStage<? extends V> other, final Consumer<? super V> action, final Executor executor
-        )
-        {
-            return wrap(future.acceptEitherAsync(other, action, executor));
-        }
-
-        @Override
-        public CalendarFuture<Void> runAfterEither(
-            final CompletionStage<?> other, final Runnable action
-        )
-        {
-            return wrap(future.runAfterEither(other, action));
-        }
-
-        @Override
-        public CalendarFuture<Void> runAfterEitherAsync(
-            final CompletionStage<?> other, final Runnable action
-        )
-        {
-            return wrap(future.runAfterEitherAsync(other, action));
-        }
-
-        @Override
-        public CalendarFuture<Void> runAfterEitherAsync(
-            final CompletionStage<?> other, final Runnable action, final Executor executor
-        )
-        {
-            return wrap(future.runAfterEitherAsync(other, action, executor));
+            return wrap(future.thenCombineAsync(other, fn, executor));
         }
 
         @Override
@@ -363,9 +369,37 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
         }
 
         @Override
-        public CalendarFuture<V> exceptionally(final Function<Throwable, ? extends V> fn)
+        public CalendarFuture<Void> thenRun(final Runnable action)
         {
-            return wrap(future.exceptionally(fn));
+            return wrap(future.thenRun(action));
+        }
+
+        @Override
+        public CalendarFuture<Void> thenRunAsync(final Runnable action)
+        {
+            return wrap(future.thenRunAsync(action));
+        }
+
+        @Override
+        public CalendarFuture<Void> thenRunAsync(
+            final Runnable action, final Executor executor
+        )
+        {
+            return wrap(future.thenRunAsync(action, executor));
+        }
+
+        @Override
+        public CompletableFuture<V> toCompletableFuture()
+        {
+            return future;
+        }
+
+        @Override
+        public String toString()
+        {
+            return MessageFormat.format(
+                "WrappedCompletableCalendarFuture'{'clock={0}, future={1}, instant={2}'}'", clock, future, instant
+            );
         }
 
         @Override
@@ -388,46 +422,10 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
             return wrap(future.whenCompleteAsync(action, executor));
         }
 
-        @Override
-        public <U> CalendarFuture<U> handle(final BiFunction<? super V, Throwable, ? extends U> fn)
-        {
-            return wrap(future.handle(fn));
-        }
-
-        @Override
-        public <U> CalendarFuture<U> handleAsync(final BiFunction<? super V, Throwable, ? extends U> fn)
-        {
-            return wrap(future.handleAsync(fn));
-        }
-
-        @Override
-        public <U> CalendarFuture<U> handleAsync(
-            final BiFunction<? super V, Throwable, ? extends U> fn, final Executor executor
-        )
-        {
-            return wrap(future.handleAsync(fn, executor));
-        }
-
-        @Override
-        public CompletableFuture<V> toCompletableFuture()
-        {
-            return future;
-        }
-
-        public <T> WrappedCompletableCalendarFuture<T> wrap(final CompletableFuture<T> future)
+        private <T> WrappedCompletableCalendarFuture<T> wrap(final CompletableFuture<T> future)
         {
             return wrap(clock, instant, future);
         }
-
-        @Override
-        public String toString()
-        {
-            return MessageFormat.format(
-                "WrappedCompletableCalendarFuture'{'clock={0}, future={1}, instant={2}'}'", clock, future, instant
-            );
-        }
-
-
     }
 
     /**
@@ -486,6 +484,12 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
         this.executor = executor;
     }
 
+    @Override
+    public boolean awaitTermination(final long timeout, final TimeUnit unit) throws InterruptedException
+    {
+        return executor.awaitTermination(timeout, unit);
+    }
+
     /**
      * Gets the adjustment period for this service.
      *
@@ -498,9 +502,9 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
 
     /**
      * Sets a new adjustment period for this service.
-     * <p/>
+     * <p>
      * All tasks are re-scheduled every adjustment period, in case the internal timer falls out-of-sync with the clock.
-     * <p/>
+     * <p>
      * The default adjustment period is 2 hours.
      *
      * @param adjustmentPeriod
@@ -523,6 +527,28 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
     public Clock getClock()
     {
         return clock;
+    }
+
+    /**
+     * The underlying executor.
+     *
+     * @return The executor.
+     */
+    public ScheduledExecutorService getExecutor()
+    {
+        return executor;
+    }
+
+    @Override
+    public boolean isShutdown()
+    {
+        return executor.isShutdown();
+    }
+
+    @Override
+    public boolean isTerminated()
+    {
+        return executor.isTerminated();
     }
 
     @Override
@@ -641,16 +667,6 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
         return WrappedCompletableCalendarFuture.wrap(clock, initial, completable);
     }
 
-    /**
-     * The underlying executor.
-     *
-     * @return The executor.
-     */
-    public ScheduledExecutorService getExecutor()
-    {
-        return executor;
-    }
-
     @Override
     public void shutdown()
     {
@@ -661,24 +677,6 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
     public List<Runnable> shutdownNow()
     {
         return executor.shutdownNow();
-    }
-
-    @Override
-    public boolean isShutdown()
-    {
-        return executor.isShutdown();
-    }
-
-    @Override
-    public boolean isTerminated()
-    {
-        return executor.isTerminated();
-    }
-
-    @Override
-    public boolean awaitTermination(final long timeout, final TimeUnit unit) throws InterruptedException
-    {
-        return executor.awaitTermination(timeout, unit);
     }
 
     @Override

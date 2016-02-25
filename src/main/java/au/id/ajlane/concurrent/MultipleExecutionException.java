@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutionException;
 
 /**
  * An {@link ExecutionException} which is caused by multiple tasks failing concurrently.
- * <p/>
+ * <p>
  * Useful for implementing {@link java.util.concurrent.ExecutorService#invokeAny(Collection)}.
  */
 public class MultipleExecutionException extends ExecutionException

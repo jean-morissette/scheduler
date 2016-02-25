@@ -16,9 +16,9 @@
 
 /**
  * Tools for executing tasks concurrently.
- * <p/>
+ * <p>
  * This package is a companion to {@link java.util.concurrent}.
- * <p/>
+ * <p>
  * The {@link au.id.ajlane.concurrent.CalendarExecutorService} allows concurrent tasks to be scheduled based on {@link
  * java.time.Clock} time.
  */

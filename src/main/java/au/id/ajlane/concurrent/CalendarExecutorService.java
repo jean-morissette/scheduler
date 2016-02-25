@@ -45,10 +45,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A {@link java.util.concurrent.ScheduledExecutorService} which can schedule tasks to occur at particular times.
- * <p/>
+ * <p>
  * Implementations <em>may</em> delay tasks to execute after their scheduled time, but <em>must not</em> execute tasks
  * before their scheduled time.
- * <p/>
+ * <p>
  * If there are no other scheduling concerns (such as priority), a {@code au.id.ajlane.concurrent
  * .CalendarExecutorService} should make a best-effort attempt to ensure that tasks are executed in time-sorted order.
  */
@@ -170,246 +170,6 @@ public interface CalendarExecutorService extends ScheduledExecutorService
      * @return A {@link java.time.Clock}.
      */
     Clock getClock();
-
-    /**
-     * Schedules a task to be executed at a particular time.
-     *
-     * @param action
-     *     The action to execute.
-     * @param instant
-     *     The time to execute the action.
-     *
-     * @return A {@link CalendarFuture} representing the scheduled task.
-     */
-    default CalendarFuture<?> schedule(final Runnable action, final Instant instant)
-    {
-        return schedule(Executors.callable(action), instant);
-    }
-
-    /**
-     * Schedules a task to be executed at a particular time.
-     *
-     * @param <V>
-     *     The type of the value returned by the task.
-     * @param action
-     *     The action to execute.
-     * @param instant
-     *     The time to execute the action.
-     *
-     * @return A {@link CalendarFuture} representing the scheduled task.
-     */
-    default <V> CalendarFuture<V> schedule(final Callable<V> action, final Instant instant)
-    {
-        return scheduleDynamically(action, instant, (t, v) -> null);
-    }
-
-    default <V> CalendarFuture<V> schedule(final Callable<V> action, final Cron expression)
-    {
-        return schedule(action, Instant.now(getClock()), expression);
-    }
-
-    default <V> CalendarFuture<V> schedule(final Callable<V> action, final Instant after, final Cron expression)
-    {
-        final ExecutionTime calculator = ExecutionTime.forCron(expression);
-        final DateTime initial = calculator.nextExecution(new DateTime(Date.from(after)));
-        return scheduleDynamically(
-            action,
-            initial.toDate()
-                .toInstant(),
-            (previousInstant, previousValue) -> {
-                return calculator.nextExecution(new DateTime(Date.from(previousInstant)))
-                    .toDate()
-                    .toInstant();
-            }
-        );
-    }
-
-    @Override
-    default CalendarFuture<?> schedule(
-        final Runnable command, final long delay, final TimeUnit unit
-    )
-    {
-        return schedule(Executors.callable(command), delay, unit);
-    }
-
-    @Override
-    default <V> CalendarFuture<V> schedule(
-        final Callable<V> callable, final long delay, final TimeUnit unit
-    )
-    {
-        return scheduleDynamically(
-            callable,
-            Instant.now(getClock())
-                .plus(delay, TimeUnits.toTemporalUnit(unit)),
-            (t, v) -> null
-        );
-    }
-
-    @Override
-    default CalendarFuture<?> scheduleAtFixedRate(
-        final Runnable command, final long initialDelay, final long period, final TimeUnit unit
-    )
-    {
-        return scheduleDynamically(
-            Executors.callable(command),
-            Instant.now(getClock())
-                .plus(initialDelay, TimeUnits.toTemporalUnit(unit)),
-            (t, v) -> t.plus(period, TimeUnits.toTemporalUnit(unit))
-        );
-    }
-
-    @Override
-    default CalendarFuture<?> scheduleWithFixedDelay(
-        final Runnable command, final long initialDelay, final long delay, final TimeUnit unit
-    )
-    {
-        return scheduleDynamically(
-            Executors.callable(command),
-            Instant.now(getClock())
-                .plus(initialDelay, TimeUnits.toTemporalUnit(unit)),
-            (t, v) -> Instant.now(getClock())
-                .plus(delay, TimeUnits.toTemporalUnit(unit))
-        );
-    }
-
-    default CalendarFuture<?> scheduleAtFixedRate(
-        final Runnable command, final long period, final TimeUnit unit
-    )
-    {
-        return scheduleDynamically(
-            Executors.callable(command),
-            Instant.now(getClock())
-                .plus(period, TimeUnits.toTemporalUnit(unit)),
-            (t, v) -> t.plus(period, TimeUnits.toTemporalUnit(unit))
-        );
-    }
-
-    /**
-     * Schedules an action to be executed at regular intervals from a particular time.
-     * <p/>
-     * The service will not wait for the first task to finish before executing subsequent tasks. To schedule a fixed
-     * delay between tasks, use {@code scheduleWithFixedDelay(Runnable, Instant, long, TimeUnit)}.
-     *
-     * @param action
-     *     The action to execute.
-     * @param from
-     *     The time to first execute the action.
-     * @param period
-     *     The time to wait.
-     * @param units
-     *     The units for the period.
-     *
-     * @return A {@link CalendarFuture} representing the scheduled task.
-     */
-    default CalendarFuture<?> scheduleAtFixedRate(
-        final Runnable action, final Instant from, final long period, final TimeUnit units
-    )
-    {
-        return scheduleDynamically(
-            Executors.callable(action), from, (t, v) -> t.plus(period, TimeUnits.toTemporalUnit(units))
-        );
-    }
-
-    /**
-     * Schedules an action to be executed at regular intervals from a particular time.
-     * <p/>
-     * The service will not wait for the first task to finish before executing subsequent tasks. To schedule a fixed
-     * delay between tasks, use {@code scheduleWithFixedDelay(Runnable, Instant, TemporalAmount)}.
-     *
-     * @param action
-     *     The action to execute.
-     * @param from
-     *     The time to first execute the action.
-     * @param period
-     *     The time to wait.
-     *
-     * @return A {@link CalendarFuture} representing the scheduled task.
-     */
-    default CalendarFuture<?> scheduleAtFixedRate(
-        final Runnable action, final Instant from, final TemporalAmount period
-    )
-    {
-        return scheduleDynamically(Executors.callable(action), from, (t, v) -> t.plus(period));
-    }
-
-    default CalendarFuture<?> scheduleAtFixedRate(
-        final Runnable action, final TemporalAmount period
-    )
-    {
-        return scheduleDynamically(Executors.callable(action), (t, v) -> t.plus(period));
-    }
-
-    /**
-     * Schedules an action to be executed many times, but delegates calculating the appropriate time for subsequent
-     * tasks to a {@link ScheduleCallback}.
-     *
-     * @param action
-     *     The action to execute.
-     * @param initial
-     *     The time for the first task to be executed.
-     * @param callback
-     *     A {@link ScheduleCallback} which will provide the times for subsequent tasks to be executed.
-     * @param <V>
-     *     The type of value returned by the action.
-     *
-     * @return A {@link CalendarFuture} representing the scheduled task.
-     */
-    <V> CalendarFuture<V> scheduleDynamically(
-        final Callable<V> action, final Instant initial, final ScheduleCallback<V> callback
-    );
-
-    default <V> CalendarFuture<V> scheduleDynamically(
-        final Callable<V> action, final ScheduleCallback<V> callback
-    )
-    {
-        final Instant initial = callback.getNext(Instant.now(getClock()), null);
-        return scheduleDynamically(action, initial, callback);
-    }
-
-    default <V> CalendarFuture<V> scheduleDynamically(
-        final Callable<V> action, final Instant initial, final TemporalAdjuster adjuster
-    )
-    {
-        return scheduleDynamically(action, initial, (t, v) -> Instant.from(adjuster.adjustInto(t)));
-    }
-
-    default <V> CalendarFuture<V> scheduleDynamically(
-        final Callable<V> action, final TemporalAdjuster adjuster
-    )
-    {
-        return scheduleDynamically(action, (t, v) -> Instant.from(adjuster.adjustInto(t)));
-    }
-
-    default CalendarFuture<?> scheduleWithFixedDelay(
-        final Runnable command, final long delay, final TimeUnit unit
-    )
-    {
-        return scheduleDynamically(
-            Executors.callable(command),
-            Instant.now(getClock())
-                .plus(delay, TimeUnits.toTemporalUnit(unit)),
-            (t, v) -> Instant.now(getClock())
-                .plus(delay, TimeUnits.toTemporalUnit(unit))
-        );
-    }
-
-    @Override
-    default <T> CalendarFuture<T> submit(final Callable<T> task)
-    {
-        return scheduleDynamically(task, Instant.now(getClock()), (t, v) -> null);
-    }
-
-    @Override
-    default <T> CalendarFuture<T> submit(final Runnable task, final T result)
-    {
-        return submit(Executors.callable(task, result));
-    }
-
-    @Override
-    default CalendarFuture<?> submit(final Runnable task)
-    {
-        return submit(Executors.callable(task));
-    }
 
     @Override
     default <T> List<Future<T>> invokeAll(final Collection<? extends Callable<T>> tasks)
@@ -605,5 +365,346 @@ public interface CalendarExecutorService extends ScheduledExecutorService
                 future.cancel(true);
             }
         }
+    }
+
+    /**
+     * Schedules a task to be executed at a particular time.
+     *
+     * @param action
+     *     The action to execute.
+     * @param instant
+     *     The time to execute the action.
+     *
+     * @return A {@link CalendarFuture} representing the scheduled task.
+     */
+    default CalendarFuture<?> schedule(final Runnable action, final Instant instant)
+    {
+        return schedule(Executors.callable(action), instant);
+    }
+
+    /**
+     * Schedules a task to be executed at a particular time.
+     *
+     * @param <V>
+     *     The type of the value returned by the task. Must not be null.
+     * @param action
+     *     The action to execute. Must not be null.
+     * @param instant
+     *     The time to execute the action.
+     *
+     * @return A {@link CalendarFuture} representing the scheduled task.
+     */
+    default <V> CalendarFuture<V> schedule(final Callable<V> action, final Instant instant)
+    {
+        return scheduleDynamically(action, instant, (t, v) -> null);
+    }
+
+    /**
+     * Schedules a task to be executed according to a cron expression.
+     *
+     * @param action
+     *     The action to execute. Must not be null.
+     * @param expression
+     *     The cron expression describing the execution schedule. Must not be null.
+     * @param <V>
+     *     The type of the value returned by the task.
+     *
+     * @return A future representing the scheduled task.
+     */
+    default <V> CalendarFuture<V> schedule(final Callable<V> action, final Cron expression)
+    {
+        return schedule(action, Instant.now(getClock()), expression);
+    }
+
+    /**
+     * Schedules a task to be executed according to a cron expression.
+     *
+     * @param action
+     *     The action to execute. Must not be null. Must not be null.
+     * @param after
+     *     A reference time, after which the schedule will begin. Must not be null.
+     * @param expression
+     *     The cron expression describing the execution schedule. Must not be null.
+     * @param <V>
+     *     The type of value returned by the task.
+     *
+     * @return A future representing the scheduled task.
+     */
+    default <V> CalendarFuture<V> schedule(final Callable<V> action, final Instant after, final Cron expression)
+    {
+        final ExecutionTime calculator = ExecutionTime.forCron(expression);
+        final DateTime initial = calculator.nextExecution(new DateTime(Date.from(after)));
+        return scheduleDynamically(
+            action,
+            initial.toDate()
+                .toInstant(),
+            (previousInstant, previousValue) -> {
+                return calculator.nextExecution(new DateTime(Date.from(previousInstant)))
+                    .toDate()
+                    .toInstant();
+            }
+        );
+    }
+
+    @Override
+    default CalendarFuture<?> schedule(
+        final Runnable command, final long delay, final TimeUnit unit
+    )
+    {
+        return schedule(Executors.callable(command), delay, unit);
+    }
+
+    @Override
+    default <V> CalendarFuture<V> schedule(
+        final Callable<V> callable, final long delay, final TimeUnit unit
+    )
+    {
+        return scheduleDynamically(
+            callable,
+            Instant.now(getClock())
+                .plus(delay, TimeUnits.toTemporalUnit(unit)),
+            (t, v) -> null
+        );
+    }
+
+    @Override
+    default CalendarFuture<?> scheduleAtFixedRate(
+        final Runnable command, final long initialDelay, final long period, final TimeUnit unit
+    )
+    {
+        return scheduleDynamically(
+            Executors.callable(command),
+            Instant.now(getClock())
+                .plus(initialDelay, TimeUnits.toTemporalUnit(unit)),
+            (t, v) -> t.plus(period, TimeUnits.toTemporalUnit(unit))
+        );
+    }
+
+    /**
+     * Schedules a periodic task that runs at regular intervals.
+     *
+     * @param command
+     *     A task to execute. Must not be null.
+     * @param period
+     *     A period between successive executions
+     * @param unit
+     *     The time unit of the period parameter
+     *
+     * @return A future representing the scheduled task.
+     */
+    default CalendarFuture<?> scheduleAtFixedRate(
+        final Runnable command, final long period, final TimeUnit unit
+    )
+    {
+        return scheduleDynamically(
+            Executors.callable(command),
+            Instant.now(getClock())
+                .plus(period, TimeUnits.toTemporalUnit(unit)),
+            (t, v) -> t.plus(period, TimeUnits.toTemporalUnit(unit))
+        );
+    }
+
+    /**
+     * Schedules an action to be executed at regular intervals from a particular time.
+     * <p>
+     * The service will not wait for the first task to finish before executing subsequent tasks. To schedule a fixed
+     * delay between tasks, use {@code scheduleWithFixedDelay(Runnable, Instant, long, TimeUnit)}.
+     *
+     * @param action
+     *     The action to execute.
+     * @param from
+     *     The time to first execute the action.
+     * @param period
+     *     The time to wait.
+     * @param units
+     *     The units for the period.
+     *
+     * @return A {@link CalendarFuture} representing the scheduled task.
+     */
+    default CalendarFuture<?> scheduleAtFixedRate(
+        final Runnable action, final Instant from, final long period, final TimeUnit units
+    )
+    {
+        return scheduleDynamically(
+            Executors.callable(action), from, (t, v) -> t.plus(period, TimeUnits.toTemporalUnit(units))
+        );
+    }
+
+    /**
+     * Schedules an action to be executed at regular intervals from a particular time.
+     * <p>
+     * The service will not wait for the first task to finish before executing subsequent tasks. To schedule a fixed
+     * delay between tasks, use {@code scheduleWithFixedDelay(Runnable, Instant, TemporalAmount)}.
+     *
+     * @param action
+     *     The action to execute.
+     * @param from
+     *     The time to first execute the action.
+     * @param period
+     *     The time to wait.
+     *
+     * @return A {@link CalendarFuture} representing the scheduled task.
+     */
+    default CalendarFuture<?> scheduleAtFixedRate(
+        final Runnable action, final Instant from, final TemporalAmount period
+    )
+    {
+        return scheduleDynamically(Executors.callable(action), from, (t, v) -> t.plus(period));
+    }
+
+    /**
+     * Schedules a periodic task to execute at a fixed rate.
+     *
+     * @param action
+     *     The action to execute.
+     * @param period
+     *     The time between tasks.
+     *
+     * @return A future representing
+     */
+    default CalendarFuture<?> scheduleAtFixedRate(
+        final Runnable action, final TemporalAmount period
+    )
+    {
+        return scheduleDynamically(Executors.callable(action), (t, v) -> t.plus(period));
+    }
+
+    /**
+     * Schedules an action to be executed many times, but delegates calculating the appropriate time for subsequent
+     * tasks to a {@link ScheduleCallback}.
+     *
+     * @param action
+     *     The action to execute.
+     * @param initial
+     *     The time for the first task to be executed.
+     * @param callback
+     *     A {@link ScheduleCallback} which will provide the times for subsequent tasks to be executed.
+     * @param <V>
+     *     The type of value returned by the action.
+     *
+     * @return A {@link CalendarFuture} representing the scheduled task.
+     */
+    <V> CalendarFuture<V> scheduleDynamically(
+        final Callable<V> action, final Instant initial, final ScheduleCallback<V> callback
+    );
+
+    /**
+     * Schedules an action to be executed many times, but delegates calculating the appropriate time for subsequent
+     * tasks to a {@link ScheduleCallback}.
+     *
+     * @param action
+     *     The action to execute.
+     * @param callback
+     *     A {@link ScheduleCallback} which will provide the times for subsequent tasks to be executed.
+     * @param <V>
+     *     The type of value returned by the action.
+     *
+     * @return A {@link CalendarFuture} representing the scheduled task.
+     */
+    default <V> CalendarFuture<V> scheduleDynamically(
+        final Callable<V> action, final ScheduleCallback<V> callback
+    )
+    {
+        final Instant initial = callback.getNext(Instant.now(getClock()), null);
+        return scheduleDynamically(action, initial, callback);
+    }
+
+    /**
+     * Schedules an action to be executed many times, but delegates calculating the appropriate time for subsequent
+     * tasks to a {@link TemporalAdjuster}.
+     *
+     * @param action
+     *     The action to execute.
+     * @param initial
+     *     The time for the first task to be executed.
+     * @param adjuster
+     *     A {@link TemporalAdjuster} which will provide the times for subsequent tasks to be executed.
+     * @param <V>
+     *     The type of value returned by the action.
+     *
+     * @return A {@link CalendarFuture} representing the scheduled task.
+     */
+    default <V> CalendarFuture<V> scheduleDynamically(
+        final Callable<V> action, final Instant initial, final TemporalAdjuster adjuster
+    )
+    {
+        return scheduleDynamically(action, initial, (t, v) -> Instant.from(adjuster.adjustInto(t)));
+    }
+
+    /**
+     * Schedules an action to be executed many times, but delegates calculating the appropriate time for subsequent
+     * tasks to a {@link TemporalAdjuster}.
+     *
+     * @param action
+     *     The action to execute.
+     * @param adjuster
+     *     A {@link TemporalAdjuster} which will provide the times for subsequent tasks to be executed.
+     * @param <V>
+     *     The type of value returned by the action.
+     *
+     * @return A {@link CalendarFuture} representing the scheduled task.
+     */
+    default <V> CalendarFuture<V> scheduleDynamically(
+        final Callable<V> action, final TemporalAdjuster adjuster
+    )
+    {
+        return scheduleDynamically(action, (t, v) -> Instant.from(adjuster.adjustInto(t)));
+    }
+
+    @Override
+    default CalendarFuture<?> scheduleWithFixedDelay(
+        final Runnable command, final long initialDelay, final long delay, final TimeUnit unit
+    )
+    {
+        return scheduleDynamically(
+            Executors.callable(command),
+            Instant.now(getClock())
+                .plus(initialDelay, TimeUnits.toTemporalUnit(unit)),
+            (t, v) -> Instant.now(getClock())
+                .plus(delay, TimeUnits.toTemporalUnit(unit))
+        );
+    }
+
+    /**
+     * Schedules a task to execute with a fixed delay between executions.
+     *
+     * @param command
+     *     The task to execute.
+     * @param delay
+     *     The delay to wait.
+     * @param unit
+     *     The units for the delay.
+     *
+     * @return A future representing the scheduled task.
+     */
+    default CalendarFuture<?> scheduleWithFixedDelay(
+        final Runnable command, final long delay, final TimeUnit unit
+    )
+    {
+        return scheduleDynamically(
+            Executors.callable(command),
+            Instant.now(getClock())
+                .plus(delay, TimeUnits.toTemporalUnit(unit)),
+            (t, v) -> Instant.now(getClock())
+                .plus(delay, TimeUnits.toTemporalUnit(unit))
+        );
+    }
+
+    @Override
+    default <T> CalendarFuture<T> submit(final Callable<T> task)
+    {
+        return scheduleDynamically(task, Instant.now(getClock()), (t, v) -> null);
+    }
+
+    @Override
+    default <T> CalendarFuture<T> submit(final Runnable task, final T result)
+    {
+        return submit(Executors.callable(task, result));
+    }
+
+    @Override
+    default CalendarFuture<?> submit(final Runnable task)
+    {
+        return submit(Executors.callable(task));
     }
 }
