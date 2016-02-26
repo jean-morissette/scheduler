@@ -13,7 +13,7 @@ Scheduler is available in Maven Central, using the following coordinates:
     <dependency>
       <groupId>au.id.ajlane.scheduler</groupId>
       <artifactId>scheduler</artifactId>
-      <version>0.0.1</version>
+      <version>0.0.2</version>
     </dependency>
   </dependencies>
   ...
