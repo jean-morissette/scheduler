@@ -17,16 +17,61 @@
 package au.id.ajlane.concurrent;
 
 import au.id.ajlane.time.TestClock;
+import com.cronutils.model.Cron;
+import com.cronutils.model.CronType;
+import com.cronutils.model.definition.CronDefinitionBuilder;
+import com.cronutils.parser.CronParser;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public final class CalendarExecutorServiceTest
 {
+    @Test
+    public void simpleCronScheduling() throws Exception
+    {
+        final Duration interval = Duration.ofMinutes(1L);
+
+        final Instant t0 = Instant.now()
+            .truncatedTo(ChronoUnit.HOURS);
+
+        final TestClock clock = new TestClock(interval, t0);
+
+        final CronParser parser = new CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.QUARTZ));
+        final Cron expression = parser.parse("0 */2 * * * * *");
+
+        final DelayBasedCalendarExecutorService executor =
+            DelayBasedCalendarExecutorService.wrap(clock, Executors.newSingleThreadScheduledExecutor());
+
+        executor.setAdjustmentPeriod(Duration.ofMillis(500L));
+
+        final BlockingQueue<Instant> lastExecution = new ArrayBlockingQueue<>(1);
+        final CalendarFuture<Instant> future = executor.schedule(
+            () -> {
+                final Instant now = clock.instant();
+                lastExecution.put(now);
+                return now;
+            },
+            expression
+        );
+
+        for (int i = 0; i < 10; i++)
+        {
+            final Instant expected = t0.plus(i * 2, ChronoUnit.MINUTES);
+            Assert.assertEquals(expected, lastExecution.poll(1L, TimeUnit.SECONDS));
+            clock.tick();
+            Assert.assertTrue(lastExecution.isEmpty());
+            clock.tick();
+        }
+    }
+
     @Test
     public void simpleScheduling() throws Exception
     {
@@ -43,8 +88,6 @@ public final class CalendarExecutorServiceTest
         final DelayBasedCalendarExecutorService executor =
             DelayBasedCalendarExecutorService.wrap(clock, Executors.newSingleThreadScheduledExecutor());
         executor.setAdjustmentPeriod(Duration.ofMillis(500L));
-
-        CalendarExecutorService.singleThread();
 
         final CalendarFuture<Instant> tN1Future = executor.schedule(() -> tN1, tN1);
         final CalendarFuture<Instant> t0Future = executor.schedule(() -> t0, t0);

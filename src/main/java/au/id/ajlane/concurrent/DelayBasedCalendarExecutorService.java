@@ -40,8 +40,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * A straight-forward {@link au.id.ajlane.concurrent.CalendarExecutorService} that uses an internal {@link
- * java.util.concurrent.ScheduledExecutorService} to delay task execution according to difference between the current
+ * A straight-forward {@link CalendarExecutorService} that uses an internal {@link ScheduledExecutorService} to delay
+ * task execution according to difference between the current
  * time and the scheduled time.
  * <p>
  * This is the default {@code CalendarExecutorService} provided by utility methods on the {@code
@@ -429,7 +429,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
     }
 
     /**
-     * Wraps an existing {@link java.util.concurrent.ScheduledExecutorService} to create a new {@code
+     * Wraps an existing {@link ScheduledExecutorService} to create a new {@code
      * DelayBasedCalendarExecutorService}.
      *
      * @param executor
@@ -443,7 +443,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
     }
 
     /**
-     * Wraps an existing {@link java.util.concurrent.ScheduledExecutorService} to create a new {@code
+     * Wraps an existing {@link ScheduledExecutorService} to create a new {@code
      * DelayBasedCalendarExecutorService}.
      *
      * @param clock
@@ -582,6 +582,10 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
             .lock();
         try
         {
+            final long idealInitialDelay = Duration.between(clock.instant(), initial)
+                .toNanos();
+            final long maxInitialDelay = adjustmentPeriod.toNanos();
+            final long initialDelay = Math.min(idealInitialDelay, maxInitialDelay);
             future.set(
                 executor.schedule(
                     new Callable<Void>()
@@ -598,15 +602,11 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
                                         .lock();
                                     try
                                     {
-                                        future.lazySet(
-                                            executor.schedule(
-                                                this, Math.min(
-                                                    countdown.negated()
-                                                        .toNanos(),
-                                                    adjustmentPeriod.toNanos()
-                                                ), TimeUnit.NANOSECONDS
-                                            )
-                                        );
+                                        final long idealDelay = countdown.negated()
+                                            .toNanos();
+                                        final long maxDelay = adjustmentPeriod.toNanos();
+                                        final long delay = Math.min(idealDelay, maxDelay);
+                                        future.set(executor.schedule(this, delay, TimeUnit.NANOSECONDS));
                                     }
                                     finally
                                     {
@@ -626,15 +626,11 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
                                                 .lock();
                                             try
                                             {
-                                                future.lazySet(
-                                                    executor.schedule(
-                                                        this, Math.min(
-                                                            Duration.between(clock.instant(), next)
-                                                                .toNanos(),
-                                                            adjustmentPeriod.toNanos()
-                                                        ), TimeUnit.NANOSECONDS
-                                                    )
-                                                );
+                                                final long idealDelay = Duration.between(clock.instant(), next)
+                                                    .toNanos();
+                                                final long maxDelay = adjustmentPeriod.toNanos();
+                                                final long delay = Math.min(idealDelay, maxDelay);
+                                                future.set(executor.schedule(this, delay, TimeUnit.NANOSECONDS));
                                             }
                                             finally
                                             {
@@ -653,8 +649,7 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
                             return null;
                         }
                     },
-                    Math.min(Duration.between(clock.instant(), initial)
-                        .toNanos(), adjustmentPeriod.toNanos()),
+                    initialDelay,
                     TimeUnit.NANOSECONDS
                 )
             );

@@ -44,7 +44,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A {@link java.util.concurrent.ScheduledExecutorService} which can schedule tasks to occur at particular times.
+ * A {@link ScheduledExecutorService} which can schedule tasks to occur at particular times.
  * <p>
  * Implementations <em>may</em> delay tasks to execute after their scheduled time, but <em>must not</em> execute tasks
  * before their scheduled time.
@@ -55,8 +55,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public interface CalendarExecutorService extends ScheduledExecutorService
 {
     /**
-     * Creates a new {@code CalendarExecutorService} which uses an underlying {@link
-     * java.util.concurrent.ScheduledExecutorService} to schedule and execute tasks.
+     * Creates a new {@code CalendarExecutorService} which uses an underlying {@link ScheduledExecutorService} to
+     * schedule and execute tasks.
      *
      * @param executor
      *     The service to decorate.
@@ -167,7 +167,7 @@ public interface CalendarExecutorService extends ScheduledExecutorService
     /**
      * Gets the {@link Clock} being used by this service to determine the current time.
      *
-     * @return A {@link java.time.Clock}.
+     * @return A {@link Clock}.
      */
     Clock getClock();
 
@@ -433,11 +433,15 @@ public interface CalendarExecutorService extends ScheduledExecutorService
     default <V> CalendarFuture<V> schedule(final Callable<V> action, final Instant after, final Cron expression)
     {
         final ExecutionTime calculator = ExecutionTime.forCron(expression);
-        final DateTime initial = calculator.nextExecution(new DateTime(Date.from(after)));
+        final Instant initial = calculator.timeToNextExecution(new DateTime(Date.from(after.minusMillis(1))))
+            .getMillis() == 1 ?
+            after :
+            calculator.nextExecution(new DateTime(Date.from(after)))
+                .toDate()
+                .toInstant();
         return scheduleDynamically(
             action,
-            initial.toDate()
-                .toInstant(),
+            initial,
             (previousInstant, previousValue) -> {
                 return calculator.nextExecution(new DateTime(Date.from(previousInstant)))
                     .toDate()
