@@ -3,9 +3,33 @@ A clock-based ExecutorService using Java 8 Time. For when Quartz is just too hea
 
 Scheduler is provided under the [Apache License Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
-<!--
+## Examples
 
-Scheduler isn't working well at the moment - fixing it will probably change the interface, so beware.
+### Using java.time
+
+```java
+CalendarExecutorService executor = CalendarExecutorService.threadPool();
+
+executor.schedule(
+    () -> System.out.println("Remember me."),
+    // Midnight (local time), 23 September 2017
+    ZonedDateTime.of(2017, 09, 23, 13, 0, 0, ZoneId.systemDefault()).toInstant()
+);
+```
+
+### Using Cron
+
+```java
+CalendarExecutorService executor = CalendarExecutorService.threadPool();
+
+CronParser parser = new CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.QUARTZ));
+
+executor.schedule(
+    () -> System.out.println("Ding dong."),
+    // Every hour, on the hour, Monday to Friday, 9am to 5pm
+    parser.parse("0 0 9-17 * * * 1-5")
+);
+```
 
 ## Getting Started
 
@@ -17,11 +41,9 @@ Scheduler is available in Maven Central, using the following coordinates:
     <dependency>
       <groupId>au.id.ajlane.scheduler</groupId>
       <artifactId>scheduler</artifactId>
-      <version>0.0.2</version>
+      <version>0.0.3</version>
     </dependency>
   </dependencies>
   ...
 </project>
 ```
-
--->
