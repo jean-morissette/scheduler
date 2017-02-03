@@ -590,12 +590,14 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
                 executor.schedule(
                     new Callable<Void>()
                     {
+                        private volatile Instant scheduled = initial;
+
                         @Override
                         public Void call()
                         {
                             try
                             {
-                                final Duration countdown = Duration.between(initial, clock.instant());
+                                final Duration countdown = Duration.between(scheduled, clock.instant());
                                 if (countdown.isNegative())
                                 {
                                     lock.writeLock()
@@ -619,13 +621,14 @@ public final class DelayBasedCalendarExecutorService implements CalendarExecutor
                                     final V result = action.call();
                                     if (callback != null)
                                     {
-                                        final Instant next = callback.getNext(initial, result);
+                                        final Instant next = callback.getNext(scheduled, result);
                                         if (next != null)
                                         {
                                             lock.writeLock()
                                                 .lock();
                                             try
                                             {
+                                                scheduled = next;
                                                 final long idealDelay = Duration.between(clock.instant(), next)
                                                     .toNanos();
                                                 final long maxDelay = adjustmentPeriod.toNanos();

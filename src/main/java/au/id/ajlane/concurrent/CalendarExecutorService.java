@@ -436,8 +436,9 @@ public interface CalendarExecutorService extends ScheduledExecutorService
     default <V> CalendarFuture<V> schedule(final Callable<V> action, final Instant after, final Cron expression)
     {
         final ExecutionTime calculator = ExecutionTime.forCron(expression);
-        final Instant initial = calculator.timeToNextExecution(new DateTime(Date.from(after.minusMillis(1))))
-            .getMillis() == 1 ?
+        final boolean useAfter =
+            calculator.timeToNextExecution(new DateTime(Date.from(after.minusMillis(1)))).getMillis() == 1;
+        final Instant initial = useAfter ?
             after :
             calculator.nextExecution(new DateTime(Date.from(after)))
                 .toDate()
@@ -446,11 +447,9 @@ public interface CalendarExecutorService extends ScheduledExecutorService
             action,
             initial,
             (previousInstant, previousValue) ->
-            {
-                return calculator.nextExecution(new DateTime(Date.from(previousInstant)))
+                calculator.nextExecution(new DateTime(Date.from(previousInstant)))
                     .toDate()
-                    .toInstant();
-            }
+                    .toInstant()
         );
     }
 
