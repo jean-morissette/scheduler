@@ -21,7 +21,7 @@
     <parent>
         <artifactId>ajlane-parent</artifactId>
         <groupId>au.id.ajlane</groupId>
-        <version>0.0.2</version>
+        <version>0.0.5</version>
     </parent>
 
     <groupId>au.id.ajlane.scheduler</groupId>

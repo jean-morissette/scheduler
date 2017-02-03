@@ -16,10 +16,6 @@
 
 package au.id.ajlane.concurrent;
 
-import com.cronutils.model.Cron;
-import com.cronutils.model.time.ExecutionTime;
-import org.joda.time.DateTime;
-
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.TemporalAdjuster;
@@ -42,6 +38,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import com.cronutils.model.Cron;
+import com.cronutils.model.time.ExecutionTime;
+import org.joda.time.DateTime;
+
 
 /**
  * A {@link ScheduledExecutorService} which can schedule tasks to occur at particular times.
@@ -251,14 +252,15 @@ public interface CalendarExecutorService extends ScheduledExecutorService
         {
             final Condition wait = lock.newCondition();
             final AtomicReference<CalendarFuture<T>> success = new AtomicReference<>();
-            final List<Throwable> failures = Collections.<Throwable>synchronizedList(new ArrayList<>(tasks.size()));
+            final List<Throwable> failures = Collections.synchronizedList(new ArrayList<>(tasks.size()));
 
             for (final Callable<T> task : tasks)
             {
                 final CalendarFuture<T> future = submit(task);
                 futures.add(future);
                 future.whenComplete(
-                    (value, failure) -> {
+                    (value, failure) ->
+                    {
                         if (failure != null)
                         {
                             failures.add(failure);
@@ -318,7 +320,8 @@ public interface CalendarExecutorService extends ScheduledExecutorService
                 final CalendarFuture<T> future = submit(task);
                 futures.add(future);
                 future.whenComplete(
-                    (value, failure) -> {
+                    (value, failure) ->
+                    {
                         if (failure != null)
                         {
                             failures.add(failure);
@@ -442,7 +445,8 @@ public interface CalendarExecutorService extends ScheduledExecutorService
         return scheduleDynamically(
             action,
             initial,
-            (previousInstant, previousValue) -> {
+            (previousInstant, previousValue) ->
+            {
                 return calculator.nextExecution(new DateTime(Date.from(previousInstant)))
                     .toDate()
                     .toInstant();

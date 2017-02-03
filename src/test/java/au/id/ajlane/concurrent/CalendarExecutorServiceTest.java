@@ -16,14 +16,6 @@
 
 package au.id.ajlane.concurrent;
 
-import au.id.ajlane.time.TestClock;
-import com.cronutils.model.Cron;
-import com.cronutils.model.CronType;
-import com.cronutils.model.definition.CronDefinitionBuilder;
-import com.cronutils.parser.CronParser;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -31,6 +23,14 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import au.id.ajlane.time.TestClock;
+import com.cronutils.model.Cron;
+import com.cronutils.model.CronType;
+import com.cronutils.model.definition.CronDefinitionBuilder;
+import com.cronutils.parser.CronParser;
+import org.junit.Assert;
+import org.junit.Test;
 
 public final class CalendarExecutorServiceTest
 {
@@ -54,7 +54,8 @@ public final class CalendarExecutorServiceTest
 
         final BlockingQueue<Instant> lastExecution = new ArrayBlockingQueue<>(1);
         final CalendarFuture<Instant> future = executor.schedule(
-            () -> {
+            () ->
+            {
                 final Instant now = clock.instant();
                 lastExecution.put(now);
                 return now;

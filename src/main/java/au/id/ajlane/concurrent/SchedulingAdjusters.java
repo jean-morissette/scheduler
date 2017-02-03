@@ -77,7 +77,8 @@ public abstract class SchedulingAdjusters
      */
     public static TemporalAdjuster chain(final Supplier<Stream<TemporalAdjuster>> adjusters)
     {
-        return t0 -> {
+        return t0 ->
+        {
             try (final Stream<TemporalAdjuster> stream = adjusters.get())
             {
                 return stream.reduce(t0, (t1, a) -> a.adjustInto(t1), (t1, t2) -> t2);
@@ -109,7 +110,8 @@ public abstract class SchedulingAdjusters
      */
     public static TemporalAdjuster nextDayOfMonth(final int dayOfMonth)
     {
-        return t -> {
+        return t ->
+        {
             YearMonth yearMonth = YearMonth.from(t);
             if (t.get(ChronoField.DAY_OF_MONTH) >= dayOfMonth)
             {
@@ -193,7 +195,8 @@ public abstract class SchedulingAdjusters
      */
     public static TemporalAdjuster nextOrSameDayOfMonth(final int dayOfMonth)
     {
-        return t -> {
+        return t ->
+        {
             YearMonth yearMonth = YearMonth.from(t);
             if (t.get(ChronoField.DAY_OF_MONTH) > dayOfMonth)
             {
@@ -233,7 +236,8 @@ public abstract class SchedulingAdjusters
      */
     public static TemporalAdjuster nextOrSameTime(@SuppressWarnings("TypeMayBeWeakened") final OffsetTime time)
     {
-        return previous -> {
+        return previous ->
+        {
             Temporal next = changeOffset(previous, time.getOffset());
             final boolean wrap = next.getLong(ChronoField.NANO_OF_DAY) > time.getLong(ChronoField.NANO_OF_DAY);
             next = next.with(ChronoField.NANO_OF_DAY, time.getLong(ChronoField.NANO_OF_DAY));
@@ -252,7 +256,8 @@ public abstract class SchedulingAdjusters
      */
     public static TemporalAdjuster nextOrSameWeekday()
     {
-        return t -> {
+        return t ->
+        {
             switch (DayOfWeek.from(t))
             {
                 case SATURDAY:
@@ -275,7 +280,8 @@ public abstract class SchedulingAdjusters
      */
     public static TemporalAdjuster nextTime(@SuppressWarnings("TypeMayBeWeakened") final OffsetTime time)
     {
-        return previous -> {
+        return previous ->
+        {
             Temporal next = changeOffset(previous, time.getOffset());
             final boolean wrap = next.getLong(ChronoField.NANO_OF_DAY) >= time.getLong(ChronoField.NANO_OF_DAY);
             next = next.with(ChronoField.NANO_OF_DAY, time.getLong(ChronoField.NANO_OF_DAY));
@@ -304,7 +310,8 @@ public abstract class SchedulingAdjusters
      */
     public static TemporalAdjuster nextWeekday()
     {
-        return t -> {
+        return t ->
+        {
             switch (DayOfWeek.from(t))
             {
                 case FRIDAY:

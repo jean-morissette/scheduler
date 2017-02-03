@@ -72,12 +72,6 @@ public final class TestClock extends Clock
     }
 
     @Override
-    public Clock withZone(final ZoneId newZone)
-    {
-        return new TestClock(newZone, tickSize, instant);
-    }
-
-    @Override
     public Instant instant()
     {
         lock.readLock()
@@ -141,5 +135,11 @@ public final class TestClock extends Clock
     public String toString()
     {
         return instant.toString();
+    }
+
+    @Override
+    public Clock withZone(final ZoneId newZone)
+    {
+        return new TestClock(newZone, tickSize, instant);
     }
 }
