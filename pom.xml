@@ -26,7 +26,7 @@
 
     <groupId>au.id.ajlane.scheduler</groupId>
     <artifactId>scheduler</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.0.3</version>
 
     <name>Scheduler</name>
     <description>A clock-based ExecutorService using Java 8 Time. For when Quartz is just too heavy.</description>
@@ -51,7 +51,7 @@
         <url>https://github.com/ajlane/scheduler</url>
         <connection>scm:git:git://github.com/ajlane/scheduler.git</connection>
         <developerConnection>scm:git:git@github.com:ajlane/scheduler.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>scheduler-0.0.3</tag>
     </scm>
 
     <properties>
