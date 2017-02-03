@@ -1,4 +1,7 @@
 # Scheduler
+[![javadoc](http://www.javadoc.io/badge/au.id.ajlane.scheduler/scheduler.svg)](http://www.javadoc.io/doc/au.id.ajlane.scheduler/scheduler)
+[![build-status](https://travis-ci.org/ajlane/scheduler.svg?branch=master)](https://travis-ci.org/ajlane/scheduler) [![codecov](https://codecov.io/gh/ajlane/scheduler/branch/master/graph/badge.svg)](https://codecov.io/gh/ajlane/scheduler)
+
 A clock-based ExecutorService using Java 8 Time. For when Quartz is just too heavy.
 
 Scheduler is provided under the [Apache License Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
